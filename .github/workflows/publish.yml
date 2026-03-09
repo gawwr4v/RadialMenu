@@ -21,6 +21,9 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
       - name: Publish to Maven Central
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
