@@ -1,4 +1,7 @@
 import java.net.URL
+import org.gradle.plugins.signing.Sign
+import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
+import org.gradle.api.publish.maven.tasks.PublishToMavenLocal
 
 plugins {
     kotlin("multiplatform")
@@ -138,10 +141,23 @@ val javadocJar by tasks.registering(Jar::class) {
 }
 
 afterEvaluate {
+    // Fix signing task ordering for KMP publications
+    tasks.withType<PublishToMavenRepository>().configureEach {
+        dependsOn(tasks.withType<Sign>())
+    }
+    tasks.withType<PublishToMavenLocal>().configureEach {
+        dependsOn(tasks.withType<Sign>())
+    }
+    // Prevent signing tasks from running in parallel
+    tasks.withType<Sign>().configureEach {
+        mustRunAfter(tasks.withType<Sign>().filter { it.name != this.name })
+    }
+
     publishing {
         publications.withType<MavenPublication> {
-            groupId = project.property("GROUP_ID") as String
-            version = project.property("VERSION_NAME") as String
+            groupId = (project.findProperty("GROUP_ID") as? String) ?: "io.github.gawwr4v"
+            version = (project.findProperty("VERSION_NAME") as? String) ?: "1.0.0"
+            artifactId = (project.findProperty("ARTIFACT_ID") as? String) ?: "radialmenu"
             artifact(javadocJar)
             configurePom()
         }
@@ -172,9 +188,9 @@ afterEvaluate {
 
 fun MavenPublication.configurePom() {
     pom {
-        name.set(project.property("LIBRARY_NAME") as String)
-        description.set(project.property("LIBRARY_DESCRIPTION") as String)
-        url.set(project.property("LIBRARY_URL") as String)
+        name.set((project.findProperty("LIBRARY_NAME") as? String) ?: "RadialMenu")
+        description.set((project.findProperty("LIBRARY_DESCRIPTION") as? String) ?: "RadialMenu library")
+        url.set((project.findProperty("LIBRARY_URL") as? String) ?: "https://github.com/gawwr4v/RadialMenu")
         licenses {
             license {
                 name.set("The Apache License, Version 2.0")
@@ -183,9 +199,9 @@ fun MavenPublication.configurePom() {
         }
         developers {
             developer {
-                id.set(project.property("DEVELOPER_ID") as String)
-                name.set(project.property("DEVELOPER_ID") as String)
-                url.set(project.property("DEVELOPER_URL") as String)
+                id.set((project.findProperty("DEVELOPER_ID") as? String) ?: "gawwr4v")
+                name.set((project.findProperty("DEVELOPER_ID") as? String) ?: "gawwr4v")
+                url.set((project.findProperty("DEVELOPER_URL") as? String) ?: "https://github.com/gawwr4v")
             }
         }
         scm {
