@@ -5,6 +5,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-03-09
+### Fixed
+- Migrated publishing from deprecated s01.oss.sonatype.org to new Maven Central Portal API
+
 ## [1.0.0], 2026-03-08
 ### Added
 - Initial release of RadialMenu for Android and Desktop

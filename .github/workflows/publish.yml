@@ -25,14 +25,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Publish to Maven Central
-        run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            # Snapshot release (main branch)
-            ./gradlew :radialmenu:publishAllPublicationsToOSSRHRepository -PVERSION_NAME=$(grep VERSION_NAME gradle.properties | cut -d'=' -f2)-SNAPSHOT -Pkotlin.native.ignoreDisabledTargets=true
-          else
-            # Stable release (v* tag)
-            ./gradlew :radialmenu:publishAllPublicationsToOSSRHRepository -Pkotlin.native.ignoreDisabledTargets=true
-          fi
+        run: ./gradlew :radialmenu:publishAllPublicationsToOSSRHRepository
         env:
           ORG_GRADLE_PROJECT_ossrhUsername: ${{ secrets.OSSRH_USERNAME }}
           ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.OSSRH_PASSWORD }}

@@ -164,12 +164,13 @@ afterEvaluate {
         repositories {
             maven {
                 name = "OSSRH"
-                val releasesUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-                val snapshotsUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-                url = if (version.toString().endsWith("SNAPSHOT")) snapshotsUrl else releasesUrl
-                credentials {
-                    username = project.findProperty("ossrhUsername") as String? ?: ""
-                    password = project.findProperty("ossrhPassword") as String? ?: ""
+                url = uri("https://central.sonatype.com/api/v1/publisher/upload")
+                credentials(HttpHeaderCredentials::class) {
+                    name = "Authorization"
+                    value = "Bearer ${project.findProperty("ossrhPassword") as String? ?: ""}"
+                }
+                authentication {
+                    create<HttpHeaderAuthentication>("header")
                 }
             }
         }
