@@ -21,7 +21,9 @@
 
 <!-- Add a GIF or screenshot here showing the menu in action -->
 <!-- Recommended: record on a real Android device using ScreenToGif or ADB -->
-![RadialMenu Demo](assets/demo.gif)
+![RadialMenu Android](assets/demo1.gif)
+
+![RadialMenu Desktop](assets/demo2.gif)
 
 > *Long press anywhere → drag to select → release to confirm*
 
