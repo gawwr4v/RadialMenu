@@ -3,11 +3,15 @@
 build/
 **/build/
 
-# Android Studio
+# Android Studio / IntelliJ / VSCode
 .idea/
+.vscode/
 *.iml
 *.iws
 local.properties
+
+# Kotlin cache
+.kotlin/
 
 # Keys and secrets (CRITICAL)
 *.keystore
