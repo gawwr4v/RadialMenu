@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="RadialMenuView">
+        <!-- Selected icon background color, default White -->
+        <attr name="rm_accentColor" format="color" />
+        <!-- Distance from touch center to icons, default 90dp -->
+        <attr name="rm_menuRadius" format="dimension" />
+        <!-- Size of the icons, default 32dp -->
+        <attr name="rm_iconSize" format="dimension" />
+        <!-- Background scrim color, default Black 50% alpha -->
+        <attr name="rm_overlayColor" format="color" />
+        <!-- Badge background color, default Red (#FF4444) -->
+        <attr name="rm_badgeColor" format="color" />
+        <!-- Animation duration in ms for item scale transitions, default 100 -->
+        <attr name="rm_animationDurationMs" format="integer" />
+    </declare-styleable>
+</resources>

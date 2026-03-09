@@ -1,0 +1,129 @@
+public final class io/github/gawwr4v/radialmenu/RadialMenuAnimationConfig {
+	public static final field $stable I
+	public static final field Companion Lio/github/gawwr4v/radialmenu/RadialMenuAnimationConfig$Companion;
+	public fun <init> ()V
+	public fun <init> (IIILandroidx/compose/animation/core/Easing;FZFF)V
+	public synthetic fun <init> (IIILandroidx/compose/animation/core/Easing;FZFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()Landroidx/compose/animation/core/Easing;
+	public final fun component5 ()F
+	public final fun component6 ()Z
+	public final fun component7 ()F
+	public final fun component8 ()F
+	public final fun copy (IIILandroidx/compose/animation/core/Easing;FZFF)Lio/github/gawwr4v/radialmenu/RadialMenuAnimationConfig;
+	public static synthetic fun copy$default (Lio/github/gawwr4v/radialmenu/RadialMenuAnimationConfig;IIILandroidx/compose/animation/core/Easing;FZFFILjava/lang/Object;)Lio/github/gawwr4v/radialmenu/RadialMenuAnimationConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCloseDurationMs ()I
+	public final fun getEasing ()Landroidx/compose/animation/core/Easing;
+	public final fun getEnableSpringAnimation ()Z
+	public final fun getItemScaleDurationMs ()I
+	public final fun getOpenDurationMs ()I
+	public final fun getSelectedItemScale ()F
+	public final fun getSpringDampingRatio ()F
+	public final fun getSpringStiffness ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/gawwr4v/radialmenu/RadialMenuAnimationConfig$Companion {
+	public final fun bouncy ()Lio/github/gawwr4v/radialmenu/RadialMenuAnimationConfig;
+	public final fun default ()Lio/github/gawwr4v/radialmenu/RadialMenuAnimationConfig;
+	public final fun slow ()Lio/github/gawwr4v/radialmenu/RadialMenuAnimationConfig;
+	public final fun snappy ()Lio/github/gawwr4v/radialmenu/RadialMenuAnimationConfig;
+}
+
+public final class io/github/gawwr4v/radialmenu/RadialMenuColors {
+	public static final field $stable I
+	public static final field Companion Lio/github/gawwr4v/radialmenu/RadialMenuColors$Companion;
+	public synthetic fun <init> (JJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-0d7_KjU ()J
+	public final fun component2-0d7_KjU ()J
+	public final fun component3-0d7_KjU ()J
+	public final fun component4-0d7_KjU ()J
+	public final fun component5-0d7_KjU ()J
+	public final fun component6-0d7_KjU ()J
+	public final fun component7-0d7_KjU ()J
+	public final fun component8-0d7_KjU ()J
+	public final fun copy-FD3wquc (JJJJJJJJ)Lio/github/gawwr4v/radialmenu/RadialMenuColors;
+	public static synthetic fun copy-FD3wquc$default (Lio/github/gawwr4v/radialmenu/RadialMenuColors;JJJJJJJJILjava/lang/Object;)Lio/github/gawwr4v/radialmenu/RadialMenuColors;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBadgeColor-0d7_KjU ()J
+	public final fun getBadgeTextColor-0d7_KjU ()J
+	public final fun getCenterIndicatorColor-0d7_KjU ()J
+	public final fun getIconTint-0d7_KjU ()J
+	public final fun getIconTintSelected-0d7_KjU ()J
+	public final fun getItemBackground-0d7_KjU ()J
+	public final fun getItemBackgroundSelected-0d7_KjU ()J
+	public final fun getOverlayColor-0d7_KjU ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/gawwr4v/radialmenu/RadialMenuColors$Companion {
+	public final fun autoTheme (Landroidx/compose/runtime/Composer;I)Lio/github/gawwr4v/radialmenu/RadialMenuColors;
+	public final fun dark ()Lio/github/gawwr4v/radialmenu/RadialMenuColors;
+	public final fun default ()Lio/github/gawwr4v/radialmenu/RadialMenuColors;
+	public final fun light ()Lio/github/gawwr4v/radialmenu/RadialMenuColors;
+}
+
+public final class io/github/gawwr4v/radialmenu/RadialMenuComposeKt {
+	public static final fun RadialMenuCanvas-7I-vYGQ (JJLjava/lang/Integer;Ljava/util/List;Lio/github/gawwr4v/radialmenu/RadialMenuColors;FLio/github/gawwr4v/radialmenu/RadialMenuAnimationConfig;Landroidx/compose/runtime/Composer;I)V
+	public static final fun RadialMenuOverlay (Ljava/util/List;Lio/github/gawwr4v/radialmenu/RadialMenuColors;Lio/github/gawwr4v/radialmenu/RadialMenuAnimationConfig;Landroidx/compose/runtime/Composer;II)V
+	public static final fun RadialMenuWrapper (Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+}
+
+public final class io/github/gawwr4v/radialmenu/RadialMenuDefaults {
+	public static final field $stable I
+	public static final field ANIMATION_DURATION_MS I
+	public static final field DEAD_ZONE_PX F
+	public static final field DOUBLE_TAP_TIMEOUT_MS J
+	public static final field DRAG_INDICATOR_ALPHA F
+	public static final field ICON_SIZE_DP F
+	public static final field ICON_SPREAD_DEGREES F
+	public static final field INSTANCE Lio/github/gawwr4v/radialmenu/RadialMenuDefaults;
+	public static final field ITEM_SCALE_NORMAL F
+	public static final field ITEM_SCALE_SELECTED F
+	public static final field LONG_PRESS_TIMEOUT_MS J
+	public static final field MENU_RADIUS_DP F
+	public static final field SELECTION_DEAD_ZONE_DEG F
+}
+
+public final class io/github/gawwr4v/radialmenu/RadialMenuItem {
+	public static final field $stable I
+	public fun <init> (ILandroidx/compose/ui/graphics/painter/Painter;Landroidx/compose/ui/graphics/painter/Painter;Ljava/lang/String;ZILjava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (ILandroidx/compose/ui/graphics/painter/Painter;Landroidx/compose/ui/graphics/painter/Painter;Ljava/lang/String;ZILjava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Landroidx/compose/ui/graphics/painter/Painter;
+	public final fun component3 ()Landroidx/compose/ui/graphics/painter/Painter;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Z
+	public final fun component6 ()I
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun copy (ILandroidx/compose/ui/graphics/painter/Painter;Landroidx/compose/ui/graphics/painter/Painter;Ljava/lang/String;ZILjava/lang/String;Ljava/lang/String;)Lio/github/gawwr4v/radialmenu/RadialMenuItem;
+	public static synthetic fun copy$default (Lio/github/gawwr4v/radialmenu/RadialMenuItem;ILandroidx/compose/ui/graphics/painter/Painter;Landroidx/compose/ui/graphics/painter/Painter;Ljava/lang/String;ZILjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/gawwr4v/radialmenu/RadialMenuItem;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBadgeCount ()I
+	public final fun getBadgeText ()Ljava/lang/String;
+	public final fun getContentDescription ()Ljava/lang/String;
+	public final fun getIcon ()Landroidx/compose/ui/graphics/painter/Painter;
+	public final fun getIconActive ()Landroidx/compose/ui/graphics/painter/Painter;
+	public final fun getId ()I
+	public final fun getLabel ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isActive ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/gawwr4v/radialmenu/RadialMenuMath {
+	public static final field $stable I
+	public static final field INSTANCE Lio/github/gawwr4v/radialmenu/RadialMenuMath;
+	public final fun calculateCenterAngle (FFFFZ)F
+	public static synthetic fun calculateCenterAngle$default (Lio/github/gawwr4v/radialmenu/RadialMenuMath;FFFFZILjava/lang/Object;)F
+	public final fun getSelectionFromDrag (FFFIFFF)Ljava/lang/Integer;
+	public static synthetic fun getSelectionFromDrag$default (Lio/github/gawwr4v/radialmenu/RadialMenuMath;FFFIFFFILjava/lang/Object;)Ljava/lang/Integer;
+	public final fun normalizeAngle (F)F
+}
+

@@ -1,0 +1,34 @@
+name: Code Quality
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Run Detekt
+        run: ./gradlew :radialmenu:detekt
+      - name: Run Lint
+        run: ./gradlew :radialmenu:lint
+      - name: Run Unit Tests
+        run: ./gradlew :radialmenu:allTests
+      - name: Check API compatibility
+        run: ./gradlew :radialmenu:apiCheck
+      - name: Build Release AAR
+        run: ./gradlew :radialmenu:assembleRelease
+      - name: Build Desktop
+        run: ./gradlew :radialmenu:compileKotlinDesktop
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: radialmenu/build/reports/

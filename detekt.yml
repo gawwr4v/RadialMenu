@@ -1,0 +1,42 @@
+complexity:
+  LongMethod:
+    threshold: 150
+  LongParameterList:
+    functionThreshold: 12
+    ignoreDefaultParameters: true
+  CyclomaticComplexMethod:
+    threshold: 40
+  NestedBlockDepth:
+    active: false
+  TooManyFunctions:
+    active: false
+naming:
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']
+  VariableNaming:
+    variablePattern: '[a-z][A-Za-z0-9]*'
+  MatchingDeclarationName:
+    active: false
+style:
+  MagicNumber:
+    active: false
+  MaxLineLength:
+    maxLineLength: 150
+  WildcardImport:
+    active: false
+  LoopWithTooManyJumpStatements:
+    active: false
+  ReturnCount:
+    active: false
+comments:
+  UndocumentedPublicClass:
+    active: true
+  UndocumentedPublicFunction:
+    active: true
+  UndocumentedPublicProperty:
+    active: true
+performance:
+  active: true
+exceptions:
+  TooGenericExceptionCaught:
+    active: false

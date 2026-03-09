@@ -1,0 +1,4 @@
+-keep class io.github.gawwr4v.radialmenu.** { *; }
+-keepclassmembers class io.github.gawwr4v.radialmenu.** { *; }
+-keepnames class io.github.gawwr4v.radialmenu.** { *; }
+-dontwarn io.github.gawwr4v.radialmenu.**

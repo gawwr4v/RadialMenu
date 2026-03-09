@@ -1,0 +1,51 @@
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Android Studio
+.idea/
+*.iml
+*.iws
+local.properties
+
+# Keys and secrets (CRITICAL)
+*.keystore
+*.jks
+keystore.properties
+signing.properties
+secret.gpg
+secret.gpg.b64
+*.asc
+
+# Logs and temp files
+*.log
+*.txt.bak
+*.tmp
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Output
+out/
+*.apk
+*.aab
+*.aar
+
+# Explicit inclusions (do NOT ignore)
+!api/
+!CHANGELOG.md
+!CONTRIBUTING.md
+!LICENSE
+!README.md
+!.github/
+!consumer-rules.pro
+
+# Existing ignores that weren't conflicting
+/captures
+.externalNativeBuild
+.cxx

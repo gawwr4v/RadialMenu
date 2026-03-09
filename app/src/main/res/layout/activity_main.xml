@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <Button
+                android:id="@+id/btnShowViewDemo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="View Demo" />
+
+            <Space
+                android:layout_width="16dp"
+                android:layout_height="wrap_content" />
+
+            <Button
+                android:id="@+id/btnShowComposeDemo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Compose Demo" />
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Legacy View Demo -->
+            <FrameLayout
+                android:id="@+id/viewDemoContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="Long press anywhere (View Demo)"
+                    android:textSize="16sp" />
+
+                <io.github.gawwr4v.radialmenu.RadialMenuView
+                    android:id="@+id/radialMenu"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:rm_menuRadius="90dp"
+                    app:rm_iconSize="32dp" />
+            </FrameLayout>
+
+            <!-- Compose Demo -->
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/composeView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+</FrameLayout>
