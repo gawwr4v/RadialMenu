@@ -24,6 +24,7 @@ secret.gpg.b64
 
 # Logs and temp files
 *.log
+*.txt
 *.txt.bak
 *.tmp
 
