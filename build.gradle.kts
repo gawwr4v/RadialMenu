@@ -9,4 +9,5 @@ plugins {
     id("io.gitlab.arturbosch.detekt") version "1.23.6" apply false
     id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.16.3" apply false
     id("org.jetbrains.dokka") version "1.9.20" apply false
+    id("com.gradleup.nmcp") version "0.0.8" apply false
 }

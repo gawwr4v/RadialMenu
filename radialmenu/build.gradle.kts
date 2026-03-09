@@ -13,6 +13,7 @@ plugins {
     id("io.gitlab.arturbosch.detekt")
     id("org.jetbrains.kotlinx.binary-compatibility-validator")
     id("org.jetbrains.dokka")
+    id("com.gradleup.nmcp")
 }
 
 kotlin {
@@ -161,19 +162,6 @@ afterEvaluate {
             artifact(javadocJar)
             configurePom()
         }
-        repositories {
-            maven {
-                name = "OSSRH"
-                url = uri("https://central.sonatype.com/api/v1/publisher/upload")
-                credentials(HttpHeaderCredentials::class) {
-                    name = "Authorization"
-                    value = "Bearer ${project.findProperty("ossrhPassword") as String? ?: ""}"
-                }
-                authentication {
-                    create<HttpHeaderAuthentication>("header")
-                }
-            }
-        }
     }
     signing {
         val signingKeyId = project.findProperty("signing.keyId") as String?
@@ -214,5 +202,13 @@ fun MavenPublication.configurePom() {
             system.set("GitHub Issues")
             url.set("https://github.com/gawwr4v/RadialMenu/issues")
         }
+    }
+}
+
+nmcp {
+    publishAllPublicationsToCentralPortal {
+        username = (project.findProperty("ossrhUsername") as? String) ?: ""
+        password = (project.findProperty("ossrhPassword") as? String) ?: ""
+        publicationType = "AUTOMATIC"
     }
 }
