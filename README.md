@@ -18,11 +18,11 @@
 > Major versions may contain breaking changes documented in [CHANGELOG.md](CHANGELOG.md).
 
 ## Preview
-<p align="center">
-  <img src="assets/demo1.gif" width="420"/>
-  <img src="assets/demo2.gif" width="420"/>
-</p>
-<p align="center"><b>Android</b> &nbsp;&nbsp;&nbsp;&nbsp; <b>Desktop</b></p>
+### Android
+<img src="assets/demo1.gif" width="700">
+
+### Desktop
+<img src="assets/demo2.gif" width="700">
 
 > *Long press anywhere → drag to select → release to confirm*
 
