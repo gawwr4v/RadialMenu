@@ -18,12 +18,11 @@
 > Major versions may contain breaking changes documented in [CHANGELOG.md](CHANGELOG.md).
 
 ## Preview
-
-<!-- Add a GIF or screenshot here showing the menu in action -->
-<!-- Recommended: record on a real Android device using ScreenToGif or ADB -->
-![RadialMenu Android](assets/demo1.gif)
-
-![RadialMenu Desktop](assets/demo2.gif)
+<p align="center">
+  <img src="assets/demo1.gif" width="420"/>
+  <img src="assets/demo2.gif" width="420"/>
+</p>
+<p align="center"><b>Android</b> &nbsp;&nbsp;&nbsp;&nbsp; <b>Desktop</b></p>
 
 > *Long press anywhere → drag to select → release to confirm*
 
