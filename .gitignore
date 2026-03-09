@@ -27,6 +27,7 @@ secret.gpg.b64
 *.txt
 *.txt.bak
 *.tmp
+*.hprof
 
 # macOS
 .DS_Store
