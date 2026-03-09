@@ -5,6 +5,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-03-10
+### Fixed
+- Migrated publishing plugin to official `com.gradleup.nmcp` publisher for Maven Central Portal Portal API compatibility
+
 ## [1.0.1] - 2026-03-09
 ### Fixed
 - Migrated publishing from deprecated s01.oss.sonatype.org to new Maven Central Portal API
