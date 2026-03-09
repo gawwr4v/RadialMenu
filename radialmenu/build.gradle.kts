@@ -64,6 +64,10 @@ kotlin {
     }
 }
 
+dependencies {
+    dokkaHtmlPlugin("org.jetbrains.dokka:android-documentation-plugin:1.9.20")
+}
+
 extensions.configure<com.android.build.api.dsl.LibraryExtension> {
     namespace = "io.github.gawwr4v.radialmenu"
     compileSdk = 35
@@ -103,6 +107,15 @@ apiValidation {
 
 tasks.dokkaHtml {
     outputDirectory.set(layout.buildDirectory.dir("dokka"))
+    pluginsMapConfiguration.set(
+        mapOf(
+            "org.jetbrains.dokka.base.DokkaBase" to """
+            {
+                "footerMessage": "RadialMenu © 2026 gawwr4v — Apache 2.0"
+            }
+            """
+        )
+    )
     dokkaSourceSets {
         named("commonMain") {
             displayName.set("Common")
