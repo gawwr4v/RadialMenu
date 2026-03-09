@@ -1,3 +1,4 @@
+@file:Suppress("UnusedPrivateMember")
 package io.github.gawwr4v.radialmenu
 
 import androidx.compose.material.icons.Icons
