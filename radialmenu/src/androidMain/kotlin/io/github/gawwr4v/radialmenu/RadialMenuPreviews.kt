@@ -17,7 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
  */
 @Preview(name = "RadialMenu - 3 items", showBackground = true, backgroundColor = 0xFF121212)
 @Composable
-internal fun RadialMenuCanvasPreview3Items() {
+private fun RadialMenuCanvasPreview3Items() {
     val items = listOf(
         RadialMenuItem(id = 1, icon = rememberVectorPainter(Icons.Filled.Share), label = "Share"),
         RadialMenuItem(id = 2, icon = rememberVectorPainter(Icons.Filled.Favorite), label = "Like"),
@@ -39,7 +39,7 @@ internal fun RadialMenuCanvasPreview3Items() {
  */
 @Preview(name = "RadialMenu - 5 items", showBackground = true, backgroundColor = 0xFF121212)
 @Composable
-internal fun RadialMenuCanvasPreview5Items() {
+private fun RadialMenuCanvasPreview5Items() {
     val items = listOf(
         RadialMenuItem(id = 1, icon = rememberVectorPainter(Icons.Filled.Share), label = "Share"),
         RadialMenuItem(id = 2, icon = rememberVectorPainter(Icons.Filled.Favorite), label = "Like"),
@@ -67,7 +67,7 @@ internal fun RadialMenuCanvasPreview5Items() {
     backgroundColor = 0xFF121212
 )
 @Composable
-internal fun RadialMenuCanvasPreviewWithBadge() {
+private fun RadialMenuCanvasPreviewWithBadge() {
     val items = listOf(
         RadialMenuItem(
             id = 1,
