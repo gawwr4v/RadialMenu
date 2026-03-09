@@ -17,6 +17,7 @@ plugins {
 }
 
 kotlin {
+    androidTarget()
     androidTarget {
         compilations.all {
             compileTaskProvider.configure {
@@ -206,9 +207,9 @@ fun MavenPublication.configurePom() {
 }
 
 nmcp {
-    publishAllPublicationsToCentralPortal {
-        username = (project.findProperty("ossrhUsername") as? String) ?: ""
-        password = (project.findProperty("ossrhPassword") as? String) ?: ""
-        publicationType = "AUTOMATIC"
+    publishAllPublications {
+        username.set((project.findProperty("ossrhUsername") as? String) ?: "")
+        password.set((project.findProperty("ossrhPassword") as? String) ?: "")
+        publicationType.set("AUTOMATIC")
     }
 }
