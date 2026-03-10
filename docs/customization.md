@@ -1,12 +1,6 @@
 ---
 title: Customization — RadialMenu
 description: Full customization guide for RadialMenu — Android's radial, circular, and pie menu library. Control colors, icons, item count, angles, and animations.
-tags:
-  - customization
-  - radial menu colors
-  - circular menu android
-  - pie menu styling
-  - android ui customization
 ---
 
 # Customization
@@ -21,69 +15,106 @@ full control over colors, radii, icons, item count, and animations.
 
 You can easily adapt RadialMenu to light and dark modes or to match your brand colors.
 
-### Kotlin (Programmatic)
+### Compose Multiplatform
+
+Colors are controlled via the `RadialMenuColors` class. The library provides convenient dark, light, and auto-theme factories.
+
 ```kotlin
-radialMenu.apply {
-    innerColor = Color.parseColor("#161B22")
-    outerColor = Color.parseColor("#0D1117")
-    selectedColor = Color.parseColor("#4F8EF7")
-    centerIconColor = Color.WHITE
+import io.github.gawwr4v.radialmenu.RadialMenuColors
+
+// Auto-theme follows the system dark mode setting
+RadialMenuWrapper(
+    items = items,
+    onItemSelected = { /* ... */ },
+    colors = RadialMenuColors.autoTheme() 
+) {
+    // Content...
 }
 ```
 
-### Options inside Compose
+If you need a completely custom palette:
+
 ```kotlin
-RadialMenu(
-    colors = RadialMenuDefaults.colors(
-        innerRoundColor = Color(0xFF161B22),
-        outerRoundColor = Color(0xFF0D1117),
-        selectedItemColor = Color(0xFF4F8EF7)
-    ),
-    // ...
-)
+RadialMenuWrapper(
+    colors = RadialMenuColors(
+        itemBackground = Color(0xFF424242),
+        itemBackgroundSelected = Color.White,
+        iconTint = Color.White,
+        iconTintSelected = Color.Black,
+        overlayColor = Color.Black.copy(alpha = 0.5f),
+        centerIndicatorColor = Color.White.copy(alpha = 0.3f),
+        badgeColor = Color(0xFFFF4444),
+        badgeTextColor = Color.White
+    )
+) { ... }
 ```
 
-## Icons
+## Icons and Labels
 
-Icons are defined per `RadialMenuItem`. We recommend using vector drawables (SVG/XML) for sharp rendering.
+Icons are defined per `RadialMenuItem`. We recommend using vector drawables (SVG/XML) for sharp rendering. The `id` is an integer, and the icon must be converted to a Compose `Painter`.
 
 ```kotlin
 val items = listOf(
-    RadialMenuItem(id = "copy", icon = R.drawable.ic_content_copy),
-    RadialMenuItem(id = "paste", icon = R.drawable.ic_content_paste)
+    RadialMenuItem(
+        id = 1, 
+        icon = painterResource(R.drawable.ic_copy),
+        label = "Copy" // Label is used for accessibility descriptions
+    ),
+    RadialMenuItem(
+        id = 2, 
+        icon = painterResource(R.drawable.ic_paste),
+        label = "Paste"
+    )
 )
 ```
 
 ## Item Count & Angles
 
-The menu automatically divides 360 degrees evenly among the items you provide.
-For example, 4 items = 90 degrees each. 5 items = 72 degrees each.
-
-There is no hard limit to the number of items, but for usability on mobile touchscreens, we recommend **3 to 8 items**.
+The menu automatically divides 360 degrees evenly among the items you provide with a default 45° spacing. There is no hard limit to the number of items, but for usability on mobile touchscreens, we recommend **3 to 8 items**. The library will emit a `Logcat` warning if you exceed 8 items, so you will see a `W/RadialMenu` message in your console if this threshold is crossed.
 
 ## Animation
 
-The open and close animations are spring-based and fluid. You can adjust the raw duration if needed:
+The open and close animations are highly customizable. You can use a preset (default, snappy, bouncy, slow) or provide your own physics.
 
 ```kotlin
-radialMenu.animationDurationMs = 250L
+import io.github.gawwr4v.radialmenu.RadialMenuAnimationConfig
+
+// Example: using the bouncy physics preset
+RadialMenuWrapper(
+    animationConfig = RadialMenuAnimationConfig.bouncy()
+) { ... }
+```
+
+Customizing everything, including turning on Spring physics overrides:
+
+```kotlin
+RadialMenuAnimationConfig(
+    openDurationMs = 250,
+    closeDurationMs = 150,
+    itemScaleDurationMs = 80,
+    selectedItemScale = 1.6f,
+    enableSpringAnimation = true,
+    springDampingRatio = Spring.DampingRatioMediumBouncy,
+    springStiffness = Spring.StiffnessMedium
+)
 ```
 
 ---
 
-## Full Attribute Reference
+## Full XML Attribute Reference (Android Views)
 
-Here are the primary properties exposed for customization on the `RadialMenuView`. 
-*(Note: The defaults shown below are the library's raw built-in defaults before any custom theming is applied).*
+If you are using `RadialMenuView` inside a traditional Android XML layout, these are the exposed custom attributes you can define dynamically in your layout file:
 
-| Attribute | Type | Default | Description |
+| XML Attribute | Format | Default Value | Description |
 |-----------|------|---------|-------------|
-| `innerColor` | `Int` (Color) | `#424242` | Background color of the central ring |
-| `outerColor` | `Int` (Color) | `#212121` | Background color of the outer ring holding items |
-| `selectedColor` | `Int` (Color) | `#1976D2` | Highlight color when an item is hovered/selected |
-| `iconTint` | `Int` (Color) | `#FFFFFF` | Tint applied to all menu icons |
-| `centerIconTint` | `Int` (Color) | `#FFFFFF` | Tint applied to the icon in the center of the menu |
-| `innerRadius` | `Float` | `60f` | Radius of the central inactive area |
-| `outerRadius` | `Float` | `150f` | Outer boundary of the entire menu |
-| `iconSize` | `Float` | `24f` | Size of the drawables inside the slices |
-| `animationDuration`| `Long` | `300L` | Duration in milliseconds for open/close anims |
+| `app:rm_accentColor` | `color` | `White` | The background color of the currently selected/hovered item. |
+| `app:rm_overlayColor` | `color` | `Black 50%` | Background dimming scrim color drawn behind the menu. |
+| `app:rm_badgeColor` | `color` | `#FF4444` | The color of notification badges attached to items. |
+| `app:rm_menuRadius` | `dimension` | `90dp` | The distance from the center touch point to the outer radial items. |
+| `app:rm_iconSize` | `dimension` | `32dp` | The width and height of the drawables inside the slices. |
+| `app:rm_animationDurationMs` | `integer` | `100` | Duration in milliseconds for the scale "pop" animation when you hover an item. |
+
+<div class="seo-keywords" aria-hidden="true">
+  customize radial menu colors, android pie menu styling, circular menu animation physics,
+  radial menu item icons, compose custom menu appearance
+</div>

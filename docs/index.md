@@ -1,14 +1,6 @@
 ---
 title: RadialMenu — Lightweight Radial Menu for Android
 description: RadialMenu is a lightweight Android library for radial menus, circular menus, and pie menus. Built for Jetpack Compose and Android Views. Gesture-driven, open source, and Kotlin-first.
-tags:
-  - radial menu
-  - circular menu
-  - pie menu
-  - arc menu
-  - android
-  - kotlin
-  - jetpack compose
 hide:
   - toc
 ---
@@ -29,9 +21,15 @@ hide:
 implementation("io.github.gawwr4v:radialmenu:1.0.2")
 ```
 
-<div align="center" style="margin: 4rem 0;">
-  <img src="assets/demo1.gif" alt="RadialMenu Demo Animation 1" width="250" style="margin-right: 1rem; border-radius: 12px; border: 1px solid var(--md-border-color);">
-  <img src="assets/demo2.gif" alt="RadialMenu Demo Animation 2" width="250" style="margin-left: 1rem; border-radius: 12px; border: 1px solid var(--md-border-color);">
+<div align="center" style="margin: 4rem 0; display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="assets/demo1.gif" alt="RadialMenu on Android" width="250" style="border-radius: 12px; border: 1px solid var(--md-border-color); margin-bottom: 0.5rem;">
+    <div style="font-size: 0.9rem; color: var(--md-default-fg-color--light);">Android App</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="assets/demo2.gif" alt="RadialMenu on Desktop (Compose Multiplatform)" width="250" style="border-radius: 12px; border: 1px solid var(--md-border-color); margin-bottom: 0.5rem;">
+    <div style="font-size: 0.9rem; color: var(--md-default-fg-color--light);">Desktop (Compose)</div>
+  </div>
 </div>
 
 ## Why RadialMenu?
@@ -61,4 +59,10 @@ Traditional Android context menus (like `PopupMenu` or `ContextMenu`) force user
     <h3>Jetpack Compose Ready</h3>
     <p>Built from the ground up for modern Android development with full Compose support.</p>
   </div>
+</div>
+
+<div class="seo-keywords" aria-hidden="true">
+  radial menu android, circular menu android, pie menu android, arc menu android,
+  wheel menu kotlin, jetpack compose radial menu, android gesture menu,
+  kotlin multiplatform menu, compose custom menu, android open source menu library
 </div>

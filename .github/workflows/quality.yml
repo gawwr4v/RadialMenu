@@ -21,8 +21,14 @@ jobs:
           distribution: 'temurin'
       - name: Make gradlew executable
         run: chmod +x gradlew
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v3
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: wrapper
       - name: Run Detekt
-        run: ./gradlew :radialmenu:detekt
+        run: ./gradlew :radialmenu:detekt --no-daemon --stacktrace
       - name: Run Lint
         run: ./gradlew :radialmenu:lint
       - name: Run Unit Tests

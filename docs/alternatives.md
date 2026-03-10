@@ -1,13 +1,6 @@
 ---
 title: Radial Menu vs Circular Menu vs Pie Menu — What's the Difference?
 description: Radial menu, circular menu, pie menu, arc menu, and wheel menu all describe the same Android UI pattern. RadialMenu implements all of them for Jetpack Compose and Android Views.
-tags:
-  - radial menu
-  - circular menu
-  - pie menu
-  - arc menu
-  - wheel menu
-  - android ui patterns
 ---
 
 # Radial Menu, Circular Menu, Pie Menu — All the Same Thing
@@ -43,3 +36,8 @@ implementation("io.github.gawwr4v:radialmenu:1.0.2")
 
 - [Getting Started](getting-started.md)
 - [API Reference](api/index.html)
+
+<div class="seo-keywords" aria-hidden="true">
+  radial menu vs circular menu, pie menu vs arc menu, android wheel menu alternatives,
+  gesture menu comparison android, best radial menu library
+</div>

@@ -3,17 +3,17 @@ All notable changes to RadialMenu will be documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
-## [Unreleased]
+## [<span class="version-badge">Unreleased</span>]
 
-## [1.0.2] - 2026-03-10
+## [<span class="version-badge">1.0.2</span>] - 2026-03-10
 ### Fixed
 - Migrated publishing plugin to official `com.gradleup.nmcp` publisher for Maven Central Portal Portal API compatibility
 
-## [1.0.1] - 2026-03-09
+## [<span class="version-badge">1.0.1</span>] - 2026-03-09
 ### Fixed
 - Migrated publishing from deprecated s01.oss.sonatype.org to new Maven Central Portal API
 
-## [1.0.0], 2026-03-08
+## [<span class="version-badge">1.0.0</span>], 2026-03-08
 ### Added
 - Initial release of RadialMenu for Android and Desktop
 - Long-press to activate, drag-to-select gesture system
@@ -41,3 +41,8 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Snapshot release support
 - SECURITY.md, CODE_OF_CONDUCT.md, SUPPORT.md
 - Min SDK 21 (Android 5.0)
+
+<div class="seo-keywords" aria-hidden="true">
+  radialmenu android release notes, circular menu kotlin updates, pie menu compose changelog,
+  android radial menu version history
+</div>

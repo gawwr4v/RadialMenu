@@ -76,6 +76,19 @@ class RadialMenuView @JvmOverloads constructor(
     private var badgeColorInt: Int = Color.parseColor("#FF4444")
     private var animationDurationMs: Long = 100L
 
+    // Cached at instance level — avoids allocation inside onDraw() at 60fps (Bug 3 fix)
+    private val selectedColorFilter = PorterDuffColorFilter(Color.BLACK, PorterDuff.Mode.SRC_IN)
+    private val unselectedColorFilter = PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+
+    // Cached Compose drawing objects — avoids allocation inside onDraw() at 60fps (Bug 2 fix)
+    private val composeDrawScope = androidx.compose.ui.graphics.drawscope.CanvasDrawScope()
+    private var composeCanvas: androidx.compose.ui.graphics.Canvas? = null
+    private var lastAndroidCanvas: android.graphics.Canvas? = null
+    private var cachedIconSize: androidx.compose.ui.geometry.Size = androidx.compose.ui.geometry.Size.Zero
+    
+    // Cached Rect for Painter bounds
+    private val itemBoundsRect = android.graphics.Rect()
+
     // Items
     private var menuItems: List<RadialMenuItem> = emptyList()
 
@@ -152,10 +165,26 @@ class RadialMenuView @JvmOverloads constructor(
         }
         overlayPaint.color = overlayColor
         badgePaint.color = badgeColorInt
+        
+        cachedIconSize = androidx.compose.ui.geometry.Size(iconSizePx, iconSizePx)
 
         // Accessibility
         contentDescription = "Radial menu"
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        // Cached at instance level — avoids allocation inside onDraw() at 60fps
+        cachedIconSize = androidx.compose.ui.geometry.Size(iconSizePx, iconSizePx)
+    }
+
+    private fun getOrCreateComposeCanvas(canvas: Canvas): androidx.compose.ui.graphics.Canvas {
+        if (composeCanvas == null || lastAndroidCanvas !== canvas) {
+            composeCanvas = androidx.compose.ui.graphics.Canvas(canvas)
+            lastAndroidCanvas = canvas
+        }
+        return composeCanvas!!
     }
 
     /**
@@ -382,18 +411,24 @@ class RadialMenuView @JvmOverloads constructor(
             canvas.drawCircle(iconCX, iconCY, bgRadius, bgCirclePaint)
 
             val drawable = if (item.isActive && item.iconActive != null) item.iconActive else item.icon
-            drawable.setBounds(
+            val cf = if (isSelected) selectedColorFilter else unselectedColorFilter
+
+            itemBoundsRect.set(
                 (iconCX - scaledSize / 2).toInt(),
                 (iconCY - scaledSize / 2).toInt(),
                 (iconCX + scaledSize / 2).toInt(),
                 (iconCY + scaledSize / 2).toInt()
             )
-            drawable.colorFilter = if (isSelected) {
-                PorterDuffColorFilter(Color.BLACK, PorterDuff.Mode.SRC_IN)
-            } else {
-                PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
-            }
-            drawable.draw(canvas)
+
+            drawable.drawWithCache(
+                canvas = canvas,
+                bounds = itemBoundsRect,
+                colorFilter = cf,
+                drawScope = composeDrawScope,
+                composeCanvas = getOrCreateComposeCanvas(canvas),
+                baseSize = cachedIconSize,
+                scale = scale
+            )
 
             // Badge
             val badgeText = item.badgeText ?: if (item.badgeCount > 0) {
