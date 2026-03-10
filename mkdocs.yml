@@ -1,5 +1,5 @@
 site_name: RadialMenu
-site_description: A lightweight, fully customizable radial menu for Android
+site_description: RadialMenu is a lightweight Android library for radial, circular, and pie menus built for Jetpack Compose and Android Views. Gesture-driven, fully customizable, and Kotlin-first.
 site_url: https://gawwr4v.github.io/RadialMenu
 repo_url: https://github.com/gawwr4v/RadialMenu
 repo_name: RadialMenu
@@ -8,6 +8,7 @@ nav:
   - Home: index.md
   - Getting Started: getting-started.md
   - Customization: customization.md
+  - Radial vs Circular vs Pie: alternatives.md
   - Changelog: changelog.md
   - API Reference: api/index.html
 
@@ -48,6 +49,8 @@ plugins:
       lang: en
   - minify:
       minify_html: true
+  - meta
+  - tags
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -62,8 +65,14 @@ markdown_extensions:
   - attr_list
   - md_in_html
   - meta
+  - toc:
+      permalink: true
+      title: On this page
 
 extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/gawwr4v/RadialMenu
+  analytics:
+    provider: google
+    property: G-XXXXXXXXXX   # ← Replace G-XXXXXXXXXX with your real GA4 property ID

@@ -1,9 +1,19 @@
 ---
 title: Getting Started — RadialMenu
-description: How to install and integrate RadialMenu into your Android project in under 5 minutes.
+description: How to install and integrate RadialMenu — a radial, circular, and pie menu library — into your Android project in under 5 minutes.
+tags:
+  - getting started
+  - installation
+  - radial menu android
+  - circular menu android
+  - pie menu android
+  - jetpack compose menu
 ---
 
 # Getting Started
+
+RadialMenu is an Android library for building radial menus — sometimes called circular menus,
+pie menus, or arc menus — with full support for Jetpack Compose and traditional Android Views.
 
 ## Requirements
 

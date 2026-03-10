@@ -1,13 +1,21 @@
 ---
 title: Customization — RadialMenu
-description: Full guide to customizing colors, icons, item count, angles, and animations in RadialMenu.
+description: Full customization guide for RadialMenu — Android's radial, circular, and pie menu library. Control colors, icons, item count, angles, and animations.
+tags:
+  - customization
+  - radial menu colors
+  - circular menu android
+  - pie menu styling
+  - android ui customization
 ---
 
 # Customization
 
 ## Overview
 
-RadialMenu provides extensive customization options. Every visual element can be tweaked, from background colors to the width of the ring to animation timings.
+RadialMenu provides extensive customization options for every visual and behavioral aspect
+of the component. Whether you call it a radial menu, pie menu, or circular menu, you have
+full control over colors, radii, icons, item count, and animations.
 
 ## Colors & Theming
 
