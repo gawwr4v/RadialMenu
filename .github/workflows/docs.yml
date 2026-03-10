@@ -40,8 +40,13 @@ jobs:
       - name: Generate Dokka HTML
         run: |
           ./gradlew :radialmenu:dokkaHtml
+
+          # Find where Dokka actually put its output
+          echo "--- Locating Dokka output ---"
+          find . -type d -name "html" | grep dokka
+
           mkdir -p docs/api
-          cp -R radialmenu/build/dokka/html/* docs/api/
+          cp -R radialmenu/build/dokka/html/. docs/api/ || echo "Standard path failed, check find output above"
           [ -f docs/api/index.html ] || (echo "Dokka output missing" && exit 1)
 
       - name: Build MkDocs
