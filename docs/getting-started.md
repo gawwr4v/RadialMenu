@@ -89,4 +89,4 @@ radialMenu.showAt(x = 500f, y = 800f)
 ## Next Steps
 
 - Explore [Customization](customization.md) to theme the menu to your app.
-- Check out the full [API Reference](api/io.github.gawwr4v.radialmenu/index.html) for advanced usage.
+- Check out the full [API Reference](api/index.html) for advanced usage.

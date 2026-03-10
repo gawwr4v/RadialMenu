@@ -13,7 +13,7 @@ hide:
   
   <div class="hero-actions">
     <a href="getting-started/" class="md-button md-button--primary">Get Started &rarr;</a>
-    <a href="api/io.github.gawwr4v.radialmenu/index.html" class="md-button">API Reference</a>
+    <a href="api/index.html" class="md-button">API Reference</a>
   </div>
 </div>
 
