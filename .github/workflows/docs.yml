@@ -41,13 +41,19 @@ jobs:
         run: |
           ./gradlew :radialmenu:dokkaHtml
 
-          # Find where Dokka actually put its output
-          echo "--- Locating Dokka output ---"
-          find . -type d -name "html" | grep dokka
+          # Find the actual output regardless of Dokka's chosen subdirectory
+          DOKKA_OUT=$(find radialmenu/build/dokka -name "index.html" | head -1 | xargs dirname)
+          
+          if [ -z "$DOKKA_OUT" ]; then
+            echo "ERROR: Could not find Dokka index.html under radialmenu/build/dokka/"
+            find radialmenu/build/ -type d | head -30
+            exit 1
+          fi
 
+          echo "Found Dokka output at: $DOKKA_OUT"
           mkdir -p docs/api
-          cp -R radialmenu/build/dokka/html/. docs/api/ || echo "Standard path failed, check find output above"
-          [ -f docs/api/index.html ] || (echo "Dokka output missing" && exit 1)
+          cp -R "$DOKKA_OUT/." docs/api/
+          [ -f docs/api/index.html ] || (echo "Dokka copy failed" && exit 1)
 
       - name: Build MkDocs
         run: mkdocs build --strict
