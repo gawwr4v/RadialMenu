@@ -14,8 +14,8 @@ nav:
 
 theme:
   name: material
-  logo: assets/logo.png
-  favicon: assets/logo.png
+  logo: assets/radialMenuLogo.png
+  favicon: assets/radialMenuLogo.png
   font:
     text: Inter
     code: JetBrains Mono

@@ -6,7 +6,7 @@ hide:
 ---
 
 <div class="homepage-hero">
-  <img src="assets/logo.png" alt="RadialMenu logo" width="80" height="80">
+  <img src="assets/radialMenuLogo.png" alt="RadialMenu logo" width="80" height="80">
   <h1>RadialMenu</h1>
   <p class="tagline">A lightweight, fully customizable radial menu for Android</p>
 </div>
