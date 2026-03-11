@@ -4,6 +4,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [<span class="version-badge">Unreleased</span>]
+### Fixed
+- Fixed shared mutable state corruption when two `RadialMenuView` instances shared the same icon drawable — visual configuration is now scoped per draw call via `drawWithCache()` parameters.
+- Fixed per-frame object allocations inside `Painter.draw()` — `Canvas`, `CanvasDrawScope`, and `Size` objects are now cached at the `RadialMenuView` instance level.
+- Fixed `PorterDuffColorFilter` allocation inside `onDraw()` loop — color filters are now pre-allocated as class-level constants.
+
 
 ## [<span class="version-badge">1.0.2</span>] - 2026-03-10
 ### Fixed

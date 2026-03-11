@@ -75,4 +75,4 @@ extra:
       link: https://github.com/gawwr4v/RadialMenu
   analytics:
     provider: google
-    property: G-XXXXXXXXXX   # ← Replace G-XXXXXXXXXX with your real GA4 property ID
+    property: G-LD029KLGPK

@@ -55,6 +55,8 @@ It features **cross-platform haptic feedback**, smooth **animated menu** transit
 
 ## Installation
 
+> **Full documentation:** [gawwr4v.github.io/RadialMenu](https://gawwr4v.github.io/RadialMenu)
+
 ```kotlin
 // Android + Desktop (Compose Multiplatform)
 implementation("io.github.gawwr4v:radialmenu:1.0.2")

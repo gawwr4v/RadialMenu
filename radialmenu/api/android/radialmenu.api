@@ -1,8 +1,5 @@
 public final class io/github/gawwr4v/radialmenu/PainterAndroidExtensionsKt {
-	public static final fun draw (Landroidx/compose/ui/graphics/painter/Painter;Landroid/graphics/Canvas;)V
-	public static final fun getColorFilter (Landroidx/compose/ui/graphics/painter/Painter;)Landroid/graphics/ColorFilter;
-	public static final fun setBounds (Landroidx/compose/ui/graphics/painter/Painter;IIII)V
-	public static final fun setColorFilter (Landroidx/compose/ui/graphics/painter/Painter;Landroid/graphics/ColorFilter;)V
+	public static final fun drawWithCache-XOOFMZI (Landroidx/compose/ui/graphics/painter/Painter;Landroid/graphics/Canvas;Landroid/graphics/Rect;Landroid/graphics/ColorFilter;Landroidx/compose/ui/graphics/drawscope/CanvasDrawScope;Landroidx/compose/ui/graphics/Canvas;JF)V
 	public static final fun toPainter (Landroid/graphics/drawable/Drawable;)Landroidx/compose/ui/graphics/painter/Painter;
 }
 

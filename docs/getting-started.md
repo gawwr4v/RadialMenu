@@ -92,6 +92,10 @@ If you are not using Compose, you can add `RadialMenuView` directly to your XML 
     app:rm_accentColor="@color/black" />
 ```
 
+### Desktop (JVM)
+
+The Compose Multiplatform examples above work identically on Desktop JVM (Windows, macOS, Linux). No additional setup is required - just use the same `RadialMenuWrapper` and `RadialMenuOverlay` composables inside your Desktop `application { Window { ... } }` block. Mouse long-press triggers the menu the same way touch does on Android.
+
 ## Your First Menu (Android Views)
 
 In your Activity or Fragment, supply the items and the selection listener. The library automatically handles the long-press gesture, edge-aware coordinate geometry, and the open/close animations. Use the `toPainter()` extension function to bridge native Android `Drawable` resources into the Compose `Painter` objects required by the library.
