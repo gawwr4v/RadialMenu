@@ -4,11 +4,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [<span class="version-badge">Unreleased</span>]
-### Fixed
-- Fixed shared mutable state corruption when two `RadialMenuView` instances shared the same icon drawable — visual configuration is now scoped per draw call via `drawWithCache()` parameters.
-- Fixed per-frame object allocations inside `Painter.draw()` — `Canvas`, `CanvasDrawScope`, and `Size` objects are now cached at the `RadialMenuView` instance level.
-- Fixed `PorterDuffColorFilter` allocation inside `onDraw()` loop — color filters are now pre-allocated as class-level constants.
 
+## [<span class="version-badge">1.0.3</span>] - 2026-03-12
+### Added
+- Zone detection for corner long-press positions
+- Edge-hug layout: items hug the two available edges when triggered from a corner (4+ items)
+- Nearest-item drag selection in edge-hug mode
+- New tunable constants: `EDGE_THRESH_DP`, `CORNER_ITEM_THRESHOLD`
+- `enableEdgeHugLayout` opt-in parameter for `RadialMenuWrapper` and `RadialMenuView` (defaults to `false`)
+- Demo app: item count slider (2-8) and edge-hug toggle switch
+
+### Fixed
+- Items no longer clip off-screen when the radial menu is triggered from a corner
+- Menu items now render above all other UI elements (toolbars, FABs, bottom nav)
+- Zone detection uses true usable screen area (system bar insets excluded)
+
+### No Breaking Changes
+- Public API is backwards compatible. New parameters have safe defaults.
 
 ## [<span class="version-badge">1.0.2</span>] - 2026-03-10
 ### Fixed

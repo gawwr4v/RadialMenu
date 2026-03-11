@@ -1,5 +1,6 @@
 package io.github.gawwr4v.radialmenu
 
+import androidx.compose.ui.geometry.Offset
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -143,5 +144,187 @@ object RadialMenuMath {
         }
 
         return if (closestDist <= selectionDeadZoneDeg) closestIndex else null
+    }
+
+    /**
+     * Zones describing where on the screen the touch occurred.
+     *
+     * Corner zones trigger the edge-hug layout when the item count
+     * exceeds [RadialMenuDefaults.CORNER_ITEM_THRESHOLD].
+     *
+     * @since 1.0.3
+     */
+    enum class MenuZone {
+        CENTER,
+        CORNER_TOP_LEFT,
+        CORNER_TOP_RIGHT,
+        CORNER_BOTTOM_LEFT,
+        CORNER_BOTTOM_RIGHT
+    }
+
+    /**
+     * Detects which screen zone the touch point falls in.
+     *
+     * Corners are checked first (both x AND y within [edgeThreshPx]
+     * of the respective edges). Anything else returns [MenuZone.CENTER].
+     *
+     * @param x Touch X position in pixels.
+     * @param y Touch Y position in pixels.
+     * @param screenWidth Screen width in pixels.
+     * @param screenHeight Screen height in pixels.
+     * @param edgeThreshPx Pixel threshold for corner detection.
+     * @return The [MenuZone] the touch falls in.
+     * @since 1.0.3
+     */
+    fun detectZone(
+        x: Float,
+        y: Float,
+        screenWidth: Float,
+        screenHeight: Float,
+        edgeThreshPx: Float
+    ): MenuZone {
+        val nearLeft = x < edgeThreshPx
+        val nearRight = x > screenWidth - edgeThreshPx
+        val nearTop = y < edgeThreshPx
+        val nearBottom = y > screenHeight - edgeThreshPx
+
+        return when {
+            nearLeft && nearTop -> MenuZone.CORNER_TOP_LEFT
+            nearRight && nearTop -> MenuZone.CORNER_TOP_RIGHT
+            nearLeft && nearBottom -> MenuZone.CORNER_BOTTOM_LEFT
+            nearRight && nearBottom -> MenuZone.CORNER_BOTTOM_RIGHT
+            else -> MenuZone.CENTER
+        }
+    }
+
+    /**
+     * Computes item center positions for the edge-hug L-shaped layout.
+     *
+     * Items are split across the two available edges adjacent to the corner.
+     * The primary edge gets `ceil(itemCount / 2)` items, the secondary gets
+     * the remainder. The corner cell itself (the intersection of the two edges)
+     * is always vacant — items start one full step away from the corner.
+     *
+     * @param zone Which corner the touch is in. Must be a CORNER_* value.
+     * @param screenWidth Screen width in pixels.
+     * @param screenHeight Screen height in pixels.
+     * @param itemCount Number of items to position.
+     * @param itemSizePx Item diameter in pixels.
+     * @param gapPx Gap between items in pixels.
+     * @param padPx Padding from screen edge in pixels.
+     * @return List of [Offset] item center positions, primary edge first.
+     * @since 1.0.3
+     */
+    fun edgeHugLayout(
+        zone: MenuZone,
+        screenWidth: Float,
+        screenHeight: Float,
+        itemCount: Int,
+        itemSizePx: Float,
+        gapPx: Float,
+        padPx: Float
+    ): List<Offset> {
+        if (itemCount == 0) return emptyList()
+
+        val step = itemSizePx + gapPx
+        val offset = step // skip the corner cell
+        val half = itemSizePx / 2f
+
+        val primaryCount = (itemCount + 1) / 2 // ceil(itemCount / 2)
+        val secondaryCount = itemCount - primaryCount
+
+        val positions = mutableListOf<Offset>()
+
+        when (zone) {
+            MenuZone.CORNER_TOP_LEFT -> {
+                // Primary: top edge, flowing right
+                for (i in 0 until primaryCount) {
+                    positions.add(Offset(padPx + offset + (i * step) + half, padPx + half))
+                }
+                // Secondary: left edge, flowing down
+                for (i in 0 until secondaryCount) {
+                    positions.add(Offset(padPx + half, padPx + offset + (i * step) + half))
+                }
+            }
+            MenuZone.CORNER_TOP_RIGHT -> {
+                // Primary: top edge, flowing left
+                for (i in 0 until primaryCount) {
+                    positions.add(Offset(screenWidth - padPx - offset - (i * step) - half, padPx + half))
+                }
+                // Secondary: right edge, flowing down
+                for (i in 0 until secondaryCount) {
+                    positions.add(Offset(screenWidth - padPx - half, padPx + offset + (i * step) + half))
+                }
+            }
+            MenuZone.CORNER_BOTTOM_LEFT -> {
+                // Primary: bottom edge, flowing right
+                for (i in 0 until primaryCount) {
+                    positions.add(Offset(padPx + offset + (i * step) + half, screenHeight - padPx - half))
+                }
+                // Secondary: left edge, flowing up
+                for (i in 0 until secondaryCount) {
+                    positions.add(Offset(padPx + half, screenHeight - padPx - offset - (i * step) - half))
+                }
+            }
+            MenuZone.CORNER_BOTTOM_RIGHT -> {
+                // Primary: bottom edge, flowing left
+                for (i in 0 until primaryCount) {
+                    positions.add(Offset(screenWidth - padPx - offset - (i * step) - half, screenHeight - padPx - half))
+                }
+                // Secondary: right edge, flowing up
+                for (i in 0 until secondaryCount) {
+                    positions.add(Offset(screenWidth - padPx - half, screenHeight - padPx - offset - (i * step) - half))
+                }
+            }
+            MenuZone.CENTER -> {
+                // Should not be called for CENTER, but return empty for safety
+            }
+        }
+
+        // Safety clamp: ensure no item center is closer than half from any edge,
+        // guaranteeing the full visual circle stays within screen bounds.
+        return positions.map { pos ->
+            Offset(
+                pos.x.coerceIn(half, screenWidth - half),
+                pos.y.coerceIn(half, screenHeight - half)
+            )
+        }
+    }
+
+    /**
+     * Selects the nearest item by Euclidean distance from the pointer.
+     *
+     * This replaces angle-based selection when the menu is in edge-hug mode,
+     * since items are no longer arranged radially.
+     *
+     * @param pointerX Pointer X position in pixels (absolute screen coords).
+     * @param pointerY Pointer Y position in pixels (absolute screen coords).
+     * @param itemPositions List of item center positions from [edgeHugLayout].
+     * @param deadZonePx Minimum distance from any item to register a selection.
+     * @return Index of the nearest item, or null if within dead zone of the touch origin.
+     * @since 1.0.3
+     */
+    fun getNearestItemSelection(
+        pointerX: Float,
+        pointerY: Float,
+        itemPositions: List<Offset>,
+        deadZonePx: Float = RadialMenuDefaults.DEAD_ZONE_PX
+    ): Int? {
+        if (itemPositions.isEmpty()) return null
+
+        var closestIndex = 0
+        var closestDist = Float.MAX_VALUE
+
+        for (i in itemPositions.indices) {
+            val dx = pointerX - itemPositions[i].x
+            val dy = pointerY - itemPositions[i].y
+            val dist = sqrt(dx * dx + dy * dy)
+            if (dist < closestDist) {
+                closestDist = dist
+                closestIndex = i
+            }
+        }
+
+        return closestIndex
     }
 }

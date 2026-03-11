@@ -42,4 +42,16 @@ object RadialMenuDefaults {
 
     /** Alpha of the drag direction indicator line. */
     const val DRAG_INDICATOR_ALPHA = 0.7f
+
+    /** Distance from screen edge (dp) within which a touch is considered a corner zone. */
+    const val EDGE_THRESH_DP = 80f
+
+    /** Maximum item count that still uses radial layout in a corner. 4+ items trigger edge-hug. */
+    const val CORNER_ITEM_THRESHOLD = 3
+
+    /** Gap between adjacent items in edge-hug layout (dp). */
+    const val EDGE_HUG_GAP_DP = 8f
+
+    /** Padding from the screen edge in edge-hug layout (dp). */
+    const val EDGE_HUG_PAD_DP = 12f
 }

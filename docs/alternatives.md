@@ -20,7 +20,7 @@ Radial menu, circular menu, pie menu, arc menu, and wheel menu all describe the 
 RadialMenu brings this premium pattern to Android by offering a highly customizable, lightweight component that works natively in both Jetpack Compose and traditional Android Views. It mathematically guarantees equal spacing, handles all edge-bounding logic, and uses fluid spring animations.
 
 ```kotlin title="build.gradle.kts"
-implementation("io.github.gawwr4v:radialmenu:1.0.2")
+implementation("io.github.gawwr4v:radialmenu:1.0.3")
 ```
 
 ## Radial Menu vs Bottom Sheet vs Context Menu

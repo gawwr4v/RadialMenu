@@ -59,7 +59,7 @@ It features **cross-platform haptic feedback**, smooth **animated menu** transit
 
 ```kotlin
 // Android + Desktop (Compose Multiplatform)
-implementation("io.github.gawwr4v:radialmenu:1.0.2")
+implementation("io.github.gawwr4v:radialmenu:1.0.3")
 ```
 
 ## Quick Start (Compose Multiplatform)
@@ -271,6 +271,36 @@ A naive radial menu typically spawns symmetrically around the touch point. This 
 - Aggressive edge-boosting ensures menu nodes steeply fan outwards or entirely inward near the absolute edge.
 - The top-adjust variable keeps the top 25% boundary clear.
 - Overall calculation ensures icons **never exceed downwards bounds** (only `195°` to `345°` are permitted).
+
+### Corner Zone Handling
+
+> Edge-hug layout is **opt-in**. You must pass `enableEdgeHugLayout = true` to `RadialMenuWrapper` or set `radialMenuView.enableEdgeHugLayout = true` on the View to activate it. The default is `false`.
+
+When the user long-presses within `EDGE_THRESH_DP` (default: 80dp) of **two** screen edges simultaneously (i.e., a corner), and the menu has **4 or more items**, the radial fan cannot fit in the available space. In this case, RadialMenu switches to **edge-hug mode**:
+
+- Items arrange in an **L-shape** along the two adjacent edges of the corner.
+- The primary edge gets `ceil(n/2)` items, the secondary edge gets the remainder.
+- The **corner cell** (the exact intersection point) is always left **vacant** - items start one full step away.
+- Selection switches from angle-based to **nearest-item distance** to match the non-radial arrangement.
+
+If item count is **3 or fewer**, the standard radial layout is always used, even in a corner, because 3 items can fit comfortably in a single quadrant.
+
+**Configuration** (in `RadialMenuDefaults`):
+
+| Constant | Default | Description |
+|----------|---------|-------------|
+| `enableEdgeHugLayout` | `false` | Opt-in to L-shaped edge-hug layout in screen corners (4+ items) |
+| `EDGE_THRESH_DP` | `80f` | Distance from screen edge (dp) that defines the corner zone |
+| `CORNER_ITEM_THRESHOLD` | `3` | Max items that still use radial layout in a corner (4+ triggers edge-hug) |
+
+### Z-Order and Rendering Layer
+
+Menu items always render above all other UI elements, including toolbars, navigation bars, FABs, and bottom sheets. This is handled automatically - no setup required from the developer.
+
+- **Compose:** The `RadialMenuOverlay` renders inside a `Popup`, which sits above all other composables in the window.
+- **Android View:** When the menu opens, an overlay is attached to the window's decor view, ensuring it draws above the entire view hierarchy. This requires an Activity context. If the context is not an Activity (e.g., Dialog or Service), the overlay falls back to rendering within the current view hierarchy.
+
+Edge-hug zone detection uses the **usable content area** (excluding system bars) rather than raw screen dimensions, so it only activates at true screen corners, not near in-app UI element edges.
 
 ## Comparison
 

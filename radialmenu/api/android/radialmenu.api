@@ -74,17 +74,21 @@ public final class io/github/gawwr4v/radialmenu/RadialMenuColors$Companion {
 }
 
 public final class io/github/gawwr4v/radialmenu/RadialMenuComposeKt {
-	public static final fun RadialMenuCanvas-7I-vYGQ (JJLjava/lang/Integer;Ljava/util/List;Lio/github/gawwr4v/radialmenu/RadialMenuColors;FLio/github/gawwr4v/radialmenu/RadialMenuAnimationConfig;Landroidx/compose/runtime/Composer;I)V
+	public static final fun RadialMenuCanvas-DBv1eBE (JJLjava/lang/Integer;Ljava/util/List;Lio/github/gawwr4v/radialmenu/RadialMenuColors;FLio/github/gawwr4v/radialmenu/RadialMenuAnimationConfig;Ljava/util/List;Landroidx/compose/runtime/Composer;II)V
 	public static final fun RadialMenuOverlay (Ljava/util/List;Lio/github/gawwr4v/radialmenu/RadialMenuColors;Lio/github/gawwr4v/radialmenu/RadialMenuAnimationConfig;Landroidx/compose/runtime/Composer;II)V
-	public static final fun RadialMenuWrapper (Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun RadialMenuWrapper (Ljava/util/List;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class io/github/gawwr4v/radialmenu/RadialMenuDefaults {
 	public static final field $stable I
 	public static final field ANIMATION_DURATION_MS I
+	public static final field CORNER_ITEM_THRESHOLD I
 	public static final field DEAD_ZONE_PX F
 	public static final field DOUBLE_TAP_TIMEOUT_MS J
 	public static final field DRAG_INDICATOR_ALPHA F
+	public static final field EDGE_HUG_GAP_DP F
+	public static final field EDGE_HUG_PAD_DP F
+	public static final field EDGE_THRESH_DP F
 	public static final field ICON_SIZE_DP F
 	public static final field ICON_SPREAD_DEGREES F
 	public static final field INSTANCE Lio/github/gawwr4v/radialmenu/RadialMenuDefaults;
@@ -127,8 +131,23 @@ public final class io/github/gawwr4v/radialmenu/RadialMenuMath {
 	public static final field INSTANCE Lio/github/gawwr4v/radialmenu/RadialMenuMath;
 	public final fun calculateCenterAngle (FFFFZ)F
 	public static synthetic fun calculateCenterAngle$default (Lio/github/gawwr4v/radialmenu/RadialMenuMath;FFFFZILjava/lang/Object;)F
+	public final fun detectZone (FFFFF)Lio/github/gawwr4v/radialmenu/RadialMenuMath$MenuZone;
+	public final fun edgeHugLayout (Lio/github/gawwr4v/radialmenu/RadialMenuMath$MenuZone;FFIFFF)Ljava/util/List;
+	public final fun getNearestItemSelection (FFLjava/util/List;F)Ljava/lang/Integer;
+	public static synthetic fun getNearestItemSelection$default (Lio/github/gawwr4v/radialmenu/RadialMenuMath;FFLjava/util/List;FILjava/lang/Object;)Ljava/lang/Integer;
 	public final fun getSelectionFromDrag (FFFIFFF)Ljava/lang/Integer;
 	public static synthetic fun getSelectionFromDrag$default (Lio/github/gawwr4v/radialmenu/RadialMenuMath;FFFIFFFILjava/lang/Object;)Ljava/lang/Integer;
 	public final fun normalizeAngle (F)F
+}
+
+public final class io/github/gawwr4v/radialmenu/RadialMenuMath$MenuZone : java/lang/Enum {
+	public static final field CENTER Lio/github/gawwr4v/radialmenu/RadialMenuMath$MenuZone;
+	public static final field CORNER_BOTTOM_LEFT Lio/github/gawwr4v/radialmenu/RadialMenuMath$MenuZone;
+	public static final field CORNER_BOTTOM_RIGHT Lio/github/gawwr4v/radialmenu/RadialMenuMath$MenuZone;
+	public static final field CORNER_TOP_LEFT Lio/github/gawwr4v/radialmenu/RadialMenuMath$MenuZone;
+	public static final field CORNER_TOP_RIGHT Lio/github/gawwr4v/radialmenu/RadialMenuMath$MenuZone;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/gawwr4v/radialmenu/RadialMenuMath$MenuZone;
+	public static fun values ()[Lio/github/gawwr4v/radialmenu/RadialMenuMath$MenuZone;
 }
 

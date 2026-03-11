@@ -2,12 +2,14 @@ package io.github.gawwr4v.radialmenu
 
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
+import android.graphics.Rect
 import android.graphics.RectF
 import android.os.Build
 import android.os.Handler
@@ -20,7 +22,10 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.ViewGroup
 import android.view.accessibility.AccessibilityEvent
+import android.widget.FrameLayout
+import androidx.compose.ui.geometry.Offset
 import androidx.annotation.Keep
 import kotlin.math.abs
 import kotlin.math.atan2
@@ -42,6 +47,11 @@ private const val DEFAULT_SPREAD_DEGREES = 45f
  * continuous physics-based selection, and support for an unlimited number of items.
  *
  * This View operates entirely on the Android Canvas API with zero Compose dependencies.
+ *
+ * **Z-Order Note:** For correct z-ordering (menu above toolbars, bottom nav, FABs),
+ * this View expects an Activity context. If the context is not an Activity (e.g.,
+ * Dialog, Service), the overlay will render within the current view hierarchy
+ * instead of above all UI elements.
  *
  * @since 1.0.0
  */
@@ -67,6 +77,15 @@ class RadialMenuView @JvmOverloads constructor(
 
     /** Callback invoked when the radial menu is closed after a gesture finishes. */
     var onMenuClosed: (() -> Unit)? = null
+
+    /**
+     * When true, items arrange in an L-shape along screen edges when
+     * long-pressed in a corner with 4+ items. Defaults to false (pure radial layout).
+     *
+     * Set to true to opt in to the edge-hug layout for corner touches.
+     * @since 1.0.3
+     */
+    var enableEdgeHugLayout: Boolean = false
 
     // XML Attributes
     private var accentColor: Int = Color.WHITE
@@ -102,6 +121,13 @@ class RadialMenuView @JvmOverloads constructor(
     private var dragY: Float = 0f
     private var currentSelectionIndex: Int? = null
     private var centerAngle: Float = 270f
+
+    // Edge-hug layout state (null = radial mode, non-null = edge-hug mode)
+    private var edgeHugPositions: List<Offset>? = null
+
+    // DecorView overlay for z-ordering above all UI elements
+    private var overlayView: View? = null
+    private val visibleDisplayRect = Rect()
 
     // Paint & Allocation objects for onDraw
     private val overlayPaint = Paint()
@@ -279,7 +305,14 @@ class RadialMenuView @JvmOverloads constructor(
 
                     val dragDist = sqrt(dragX * dragX + dragY * dragY)
                     if (dragDist > 30f) {
-                        val newIndex = getSelectionFromDrag(dragX, dragY, centerAngle)
+                        val positions = edgeHugPositions
+                        val newIndex = if (positions != null) {
+                            // Edge-hug mode: select by nearest distance
+                            RadialMenuMath.getNearestItemSelection(x, y, positions)
+                        } else {
+                            // Radial mode: existing angle-based selection
+                            getSelectionFromDrag(dragX, dragY, centerAngle)
+                        }
 
                         if (newIndex != currentSelectionIndex) {
                             if (newIndex != null) {
@@ -328,10 +361,45 @@ class RadialMenuView @JvmOverloads constructor(
     private fun handleLongPress(x: Float, y: Float) {
         if (!moved && menuItems.isNotEmpty()) {
             vibrate(50)
+            val density = context.resources.displayMetrics.density
+            val edgeThreshPx = RadialMenuDefaults.EDGE_THRESH_DP * density
+
+            // Use the window's visible display frame (excluding system bars)
+            // for zone detection so we only detect true screen corners,
+            // not edges near toolbars or nav bars.
+            rootView.getWindowVisibleDisplayFrame(visibleDisplayRect)
+            val usableWidth = visibleDisplayRect.width().toFloat()
+            val usableHeight = visibleDisplayRect.height().toFloat()
+
+            // Map touch coordinates relative to the visible display frame
+            val locationOnScreen = IntArray(2)
+            getLocationOnScreen(locationOnScreen)
+            val screenX = locationOnScreen[0] + x - visibleDisplayRect.left
+            val screenY = locationOnScreen[1] + y - visibleDisplayRect.top
+
+            val zone = RadialMenuMath.detectZone(screenX, screenY, usableWidth, usableHeight, edgeThreshPx)
+            val useEdgeHug = enableEdgeHugLayout &&
+                zone != RadialMenuMath.MenuZone.CENTER &&
+                menuItems.size > RadialMenuDefaults.CORNER_ITEM_THRESHOLD
+
+            // Use the view's own dimensions for layout positioning (unchanged)
             val screenWidth = width.toFloat()
             val screenHeight = height.toFloat()
 
-            centerAngle = calculateCenterAngle(x, y, screenWidth, screenHeight)
+            if (useEdgeHug) {
+                val itemSizePx = RadialMenuDefaults.ICON_SIZE_DP * density * 1.5f
+                val gapPx = RadialMenuDefaults.EDGE_HUG_GAP_DP * density
+                val padPx = RadialMenuDefaults.EDGE_HUG_PAD_DP * density
+                edgeHugPositions = RadialMenuMath.edgeHugLayout(
+                    zone, screenWidth, screenHeight,
+                    menuItems.size, itemSizePx, gapPx, padPx
+                )
+                centerAngle = 0f // unused in edge-hug mode
+            } else {
+                edgeHugPositions = null
+                centerAngle = calculateCenterAngle(x, y, screenWidth, screenHeight)
+            }
+
             isMenuOpen = true
             touchX = x
             touchY = y
@@ -340,6 +408,7 @@ class RadialMenuView @JvmOverloads constructor(
             currentSelectionIndex = null
 
             resetAllScales()
+            attachOverlayToDecorView()
 
             onMenuOpened?.invoke()
             post { invalidate() }
@@ -351,9 +420,44 @@ class RadialMenuView @JvmOverloads constructor(
         currentSelectionIndex = null
         dragX = 0f
         dragY = 0f
+        edgeHugPositions = null
         resetAllScales()
+        detachOverlayFromDecorView()
         onMenuClosed?.invoke()
         post { invalidate() }
+    }
+
+    /**
+     * Attaches a transparent fullscreen overlay to the window's decor view
+     * so menu items render above all other UI elements (toolbars, FABs, etc.).
+     * Falls back to invalidating in-place if the context is not an Activity.
+     */
+    private fun attachOverlayToDecorView() {
+        val activity = context as? Activity ?: return // Graceful fallback: draw in-place
+        val decorView = activity.window?.decorView as? ViewGroup ?: return
+
+        val overlay = object : View(context) {
+            override fun onDraw(canvas: Canvas) {
+                super.onDraw(canvas)
+                this@RadialMenuView.drawMenuOverlay(canvas)
+            }
+        }
+        overlay.layoutParams = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        )
+        decorView.addView(overlay)
+        overlayView = overlay
+    }
+
+    /**
+     * Removes the overlay view from the decor view when the menu closes.
+     */
+    private fun detachOverlayFromDecorView() {
+        overlayView?.let { overlay ->
+            (overlay.parent as? ViewGroup)?.removeView(overlay)
+        }
+        overlayView = null
     }
 
     private fun resetAllScales() {
@@ -388,19 +492,63 @@ class RadialMenuView @JvmOverloads constructor(
         super.onDraw(canvas)
         if (!isMenuOpen) return
 
+        if (overlayView != null) {
+            // Overlay is attached to decorView — it handles drawing.
+            // Trigger a redraw on the overlay instead.
+            overlayView?.postInvalidate()
+            return
+        }
+
+        // No overlay (non-Activity context fallback) — draw in-place
+        drawMenuOverlay(canvas)
+    }
+
+    /**
+     * Draws the full menu overlay (scrim, items, badges, drag indicator).
+     * Called either from this view's onDraw (fallback) or from the
+     * decorView overlay (z-ordered above all UI).
+     */
+    internal fun drawMenuOverlay(canvas: Canvas) {
+        if (!isMenuOpen) return
+
+        // When drawing on the decorView overlay, translate to this view's
+        // position on screen so all coordinates stay correct.
+        val isOverlay = overlayView != null
+        if (isOverlay) {
+            val loc = IntArray(2)
+            getLocationOnScreen(loc)
+            canvas.save()
+            canvas.translate(loc[0].toFloat(), loc[1].toFloat())
+            // Clip to this view's bounds
+            canvas.clipRect(0f, 0f, width.toFloat(), height.toFloat())
+        }
+
         // Draw scrim
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), overlayPaint)
 
-        // Draw center indicator
-        canvas.drawCircle(touchX, touchY, 16f, backgroundPaint)
+        val positions = edgeHugPositions
+
+        // Center indicator (only in radial mode)
+        if (positions == null) {
+            canvas.drawCircle(touchX, touchY, 16f, backgroundPaint)
+        }
 
         val itemCount = menuItems.size
         for (i in 0 until itemCount) {
             val item = menuItems[i]
-            val itemAngle = centerAngle + ((i - (itemCount - 1) / 2f) * DEFAULT_SPREAD_DEGREES)
-            val angleRad = Math.toRadians(itemAngle.toDouble())
-            val iconCX = touchX + menuRadiusPx * cos(angleRad).toFloat()
-            val iconCY = touchY + menuRadiusPx * sin(angleRad).toFloat()
+
+            // Determine icon center: edge-hug positions or radial angle calculation
+            val iconCX: Float
+            val iconCY: Float
+            if (positions != null && i < positions.size) {
+                iconCX = positions[i].x
+                iconCY = positions[i].y
+            } else {
+                val itemAngle = centerAngle + ((i - (itemCount - 1) / 2f) * DEFAULT_SPREAD_DEGREES)
+                val angleRad = Math.toRadians(itemAngle.toDouble())
+                iconCX = touchX + menuRadiusPx * cos(angleRad).toFloat()
+                iconCY = touchY + menuRadiusPx * sin(angleRad).toFloat()
+            }
 
             val isSelected = currentSelectionIndex == i
             val scale = if (i < itemScales.size) itemScales[i] else 1.0f
@@ -454,18 +602,24 @@ class RadialMenuView @JvmOverloads constructor(
             }
         }
 
-        // Draw drag direction indicator
-        val dragDist = sqrt(dragX * dragX + dragY * dragY)
-        if (dragDist > 20f) {
-            val indicatorLen = minOf(dragDist * 0.6f, menuRadiusPx * 0.5f)
-            val normalizedX = dragX / dragDist
-            val normalizedY = dragY / dragDist
-            canvas.drawLine(
-                touchX, touchY,
-                touchX + normalizedX * indicatorLen,
-                touchY + normalizedY * indicatorLen,
-                linePaint
-            )
+        // Draw drag direction indicator (only in radial mode)
+        if (positions == null) {
+            val dragDist = sqrt(dragX * dragX + dragY * dragY)
+            if (dragDist > 20f) {
+                val indicatorLen = minOf(dragDist * 0.6f, menuRadiusPx * 0.5f)
+                val normalizedX = dragX / dragDist
+                val normalizedY = dragY / dragDist
+                canvas.drawLine(
+                    touchX, touchY,
+                    touchX + normalizedX * indicatorLen,
+                    touchY + normalizedY * indicatorLen,
+                    linePaint
+                )
+            }
+        }
+
+        if (isOverlay) {
+            canvas.restore()
         }
     }
 }

@@ -4,7 +4,7 @@ A radial menu for Android & Desktop.
 Long-press to activate, drag to select.
 
 ```kotlin
-implementation("io.github.gawwr4v:radialmenu:1.0.2")
+implementation("io.github.gawwr4v:radialmenu:1.0.3")
 ```
 
 ## Useful Links
