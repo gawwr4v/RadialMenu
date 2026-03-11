@@ -21,7 +21,12 @@ jobs:
         run: chmod +x gradlew
 
       - name: Publish to Maven Central
-        run: ./gradlew :radialmenu:publishAllPublicationsToCentralPortal
+        timeout-minutes: 15
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: ./gradlew :radialmenu:publishAllPublicationsToCentralPortal --no-daemon
         env:
           ORG_GRADLE_PROJECT_ossrhUsername: ${{ secrets.OSSRH_USERNAME }}
           ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.OSSRH_PASSWORD }}
