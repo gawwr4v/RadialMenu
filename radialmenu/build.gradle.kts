@@ -192,8 +192,8 @@ afterEvaluate {
 
 fun MavenPublication.configurePom() {
     pom {
-        name.set((project.findProperty("LIBRARY_NAME") as? String) ?: "RadialMenu")
-        description.set((project.findProperty("LIBRARY_DESCRIPTION") as? String) ?: "RadialMenu library")
+        name.set((project.findProperty("LIBRARY_NAME") as? String) ?: "RadialMenu — Radial Context Menu for Android & Desktop (Compose + View)")
+        description.set((project.findProperty("LIBRARY_DESCRIPTION") as? String) ?: "A customizable radial context menu for Android & Desktop, supporting Jetpack Compose and the View system.")
         url.set((project.findProperty("LIBRARY_URL") as? String) ?: "https://github.com/gawwr4v/RadialMenu")
         licenses {
             license {
@@ -204,7 +204,7 @@ fun MavenPublication.configurePom() {
         developers {
             developer {
                 id.set((project.findProperty("DEVELOPER_ID") as? String) ?: "gawwr4v")
-                name.set((project.findProperty("DEVELOPER_ID") as? String) ?: "gawwr4v")
+                name.set((project.findProperty("DEVELOPER_NAME") as? String) ?: "Gourav Sarkar")
                 url.set((project.findProperty("DEVELOPER_URL") as? String) ?: "https://github.com/gawwr4v")
             }
         }
