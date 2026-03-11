@@ -1,4 +1,4 @@
-# RadialMenu: Kotlin Multiplatform Circular Context Menu
+# RadialMenu — Radial Menu & Circular Menu for Android and Desktop | Kotlin Multiplatform
 
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.gawwr4v/radialmenu.svg)](https://search.maven.org/artifact/io.github.gawwr4v/radialmenu)
 [![Kotlin Multiplatform](https://img.shields.io/badge/Kotlin-Multiplatform-blueviolet.svg)](https://kotlinlang.org/docs/multiplatform.html)
@@ -57,7 +57,7 @@ It features **cross-platform haptic feedback**, smooth **animated menu** transit
 
 ```kotlin
 // Android + Desktop (Compose Multiplatform)
-implementation("io.github.gawwr4v:radialmenu:1.0.0")
+implementation("io.github.gawwr4v:radialmenu:1.0.2")
 ```
 
 ## Quick Start (Compose Multiplatform)
@@ -270,27 +270,23 @@ A naive radial menu typically spawns symmetrically around the touch point. This 
 - The top-adjust variable keeps the top 25% boundary clear.
 - Overall calculation ensures icons **never exceed downwards bounds** (only `195°` to `345°` are permitted).
 
-## Snapshot Releases
+## Comparison
 
-Snapshot builds are published automatically on every push to `main`.
-To use a snapshot in your project:
-
-```kotlin
-// settings.gradle.kts
-dependencyResolutionManagement {
-    repositories {
-        maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-        google()
-        mavenCentral()
-    }
-}
-
-// app/build.gradle.kts
-implementation("io.github.gawwr4v:radialmenu-android:1.0.1-SNAPSHOT")
-```
-
-> ⚠️ Snapshot releases may contain unstable or breaking changes.
-> Use only for testing upcoming features.
+| Feature | RadialMenu | Others           |
+|---|---|------------------|
+| Platforms | ✅ Android + Desktop JVM | ❌ Android only   |
+| Kotlin Multiplatform | ✅ | ❌                |
+| Compose Multiplatform API | ✅ Android + Desktop | ❌                |
+| Traditional View API | ✅ Android | ✅ Android        |
+| Edge-aware positioning | ✅ Never clips | ❌                |
+| Drag-to-select gesture | ✅ | ❌ Click only     |
+| Haptic feedback | ✅ | ❌                |
+| Badge support | ✅ | ❌                |
+| RTL support | ✅ | ❌                |
+| Dark/light/auto theme | ✅ | ❌                |
+| Spring physics animations | ✅ | ❌                |
+| External dependencies | 0 | JitPack required |
+| Published on Maven Central | ✅ | ❌                |
 
 ## Community
 
@@ -315,3 +311,23 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
+## Also known as
+
+RadialMenu is what developers are looking for when they search for:
+
+- Android radial menu
+- Desktop radial menu
+- Kotlin Multiplatform radial menu
+- Android circular menu
+- Compose Multiplatform circular menu
+- Android pie menu
+- Desktop pie menu
+- KMP context menu
+- Pinterest long press menu Android
+- Kotlin circular menu
+- Compose radial menu
+- Android floating action menu
+- Multiplatform gesture menu
+- KMP radial menu
+- Compose Desktop circular menu
+- Jetpack Compose radial menu

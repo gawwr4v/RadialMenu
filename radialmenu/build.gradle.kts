@@ -119,6 +119,7 @@ tasks.dokkaHtml {
     dokkaSourceSets {
         named("commonMain") {
             displayName.set("Common")
+            includes.from("MODULE.md")
             sourceLink {
                 localDirectory.set(file("src/commonMain/kotlin"))
                 remoteUrl.set(

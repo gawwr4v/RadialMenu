@@ -12,7 +12,7 @@ hide:
 </div>
 
 <p class="seo-synonyms">
-  RadialMenu is also known as a circular menu, pie menu, arc menu, or wheel menu —
+  RadialMenu is also known as a circular menu, pie menu, arc menu, or wheel menu -
   all referring to the same gesture-driven radial interaction pattern popular in
   modern Android UI design. If you searched for any of those terms, you are in the right place.
 </p>
@@ -21,13 +21,13 @@ hide:
 implementation("io.github.gawwr4v:radialmenu:1.0.2")
 ```
 
-<div align="center" style="margin: 4rem 0; display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;">
+<div align="center" style="margin: 4rem 0; display: flex; justify-content: center; gap: 4rem; flex-wrap: wrap;">
   <div style="text-align: center;">
-    <img src="assets/demo1.gif" alt="RadialMenu on Android" width="250" style="border-radius: 12px; border: 1px solid var(--md-border-color); margin-bottom: 0.5rem;">
+    <img src="assets/demo1.gif" alt="RadialMenu on Android" width="380" style="border-radius: 12px; border: 1px solid var(--md-border-color); margin-bottom: 0.5rem;">
     <div style="font-size: 0.9rem; color: var(--md-default-fg-color--light);">Android App</div>
   </div>
   <div style="text-align: center;">
-    <img src="assets/demo2.gif" alt="RadialMenu on Desktop (Compose Multiplatform)" width="250" style="border-radius: 12px; border: 1px solid var(--md-border-color); margin-bottom: 0.5rem;">
+    <img src="assets/demo2.gif" alt="RadialMenu on Desktop (Compose Multiplatform)" width="380" style="border-radius: 12px; border: 1px solid var(--md-border-color); margin-bottom: 0.5rem;">
     <div style="font-size: 0.9rem; color: var(--md-default-fg-color--light);">Desktop (Compose)</div>
   </div>
 </div>
