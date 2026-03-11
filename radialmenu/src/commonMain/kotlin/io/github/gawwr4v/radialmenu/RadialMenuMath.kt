@@ -304,10 +304,12 @@ object RadialMenuMath {
      * @return Index of the nearest item, or null if within dead zone of the touch origin.
      * @since 1.0.3
      */
+    @Suppress("UnusedParameter")
     fun getNearestItemSelection(
         pointerX: Float,
         pointerY: Float,
         itemPositions: List<Offset>,
+        // Reserved: deadZonePx is part of the public API signature, removal would be a breaking change.
         deadZonePx: Float = RadialMenuDefaults.DEAD_ZONE_PX
     ): Int? {
         if (itemPositions.isEmpty()) return null

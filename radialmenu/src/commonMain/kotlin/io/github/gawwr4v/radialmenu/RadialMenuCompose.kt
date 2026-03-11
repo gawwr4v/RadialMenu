@@ -192,52 +192,26 @@ fun RadialMenuWrapper(
                             // Trigger a distinct vibration to notify them the menu is open.
                             hapticFeedback.vibrate(50)
 
-                            val edgeThreshPx = with(density) { EDGE_THRESH_DP.dp.toPx() }
-                            // detectZone uses window coords: touch is in window space,
-                            // and W/H must be window dimensions so corners are detected
-                            // at true screen boundaries, not container boundaries.
-                            val zone = RadialMenuMath.detectZone(
-                                absolutePosition.x, absolutePosition.y,
-                                winW, winH, edgeThreshPx
+                            val initialState = computeInitialMenuState(
+                                absolutePosition = absolutePosition,
+                                winW = winW,
+                                winH = winH,
+                                containerW = containerW,
+                                containerH = containerH,
+                                isRtl = isRtl,
+                                density = density,
+                                itemsCount = items.size,
+                                enableEdgeHugLayout = enableEdgeHugLayout
                             )
-
-                            // Decision tree: edge-hug requires explicit opt-in,
-                            // corner zone, AND 4+ items. Otherwise radial (unchanged).
-                            val useEdgeHug = enableEdgeHugLayout &&
-                                zone != MenuZone.CENTER && items.size > CORNER_ITEM_THRESHOLD
-
-                            val centerAngle: Float
-                            val edgeHugPositions: List<Offset>?
-
-                            if (useEdgeHug) {
-                                centerAngle = 0f // unused in edge-hug mode
-                                val itemSizePx = with(density) { ICON_SIZE_DP.dp.toPx() }
-                                val gapPx = with(density) { EDGE_HUG_GAP_DP.dp.toPx() }
-                                val padPx = with(density) { EDGE_HUG_PAD_DP.dp.toPx() }
-                                // edgeHugLayout uses window dimensions because positions
-                                // are rendered in the fullscreen Popup.
-                                edgeHugPositions = RadialMenuMath.edgeHugLayout(
-                                    zone, winW, winH,
-                                    items.size, itemSizePx * 1.5f, gapPx, padPx
-                                )
-                            } else {
-                                // Radial layout uses container dimensions since items
-                                // are positioned relative to the touch center.
-                                centerAngle = calculateCenterAngle(
-                                    absolutePosition.x, absolutePosition.y,
-                                    containerW, containerH, isRtl
-                                )
-                                edgeHugPositions = null
-                            }
 
                             globalMenuState.value = RadialMenuState(
                                 isVisible = true,
                                 touchPosition = absolutePosition,
                                 dragOffset = Offset.Zero,
                                 currentSelectionIndex = null,
-                                centerAngle = centerAngle,
-                                zone = zone,
-                                edgeHugPositions = edgeHugPositions
+                                centerAngle = initialState.centerAngle,
+                                zone = initialState.zone,
+                                edgeHugPositions = initialState.edgeHugPositions
                             )
 
                             var lastPosition = startPosition
@@ -275,15 +249,15 @@ fun RadialMenuWrapper(
                                 // We only start selecting items if they drag past a minimum threshold
                                 // to avoid accidental selections when simply holding the menu open.
                                 if (dragDist > 30f) {
-                                    val newIndex = if (edgeHugPositions != null) {
+                                    val newIndex = if (initialState.edgeHugPositions != null) {
                                         // Edge-hug mode: select by nearest distance to absolute pointer
                                         val absolutePointer = containerPosition + currentPos
                                         RadialMenuMath.getNearestItemSelection(
-                                            absolutePointer.x, absolutePointer.y, edgeHugPositions
+                                            absolutePointer.x, absolutePointer.y, initialState.edgeHugPositions
                                         )
                                     } else {
                                         // Radial mode: existing angle-based selection (unchanged)
-                                        getSelectionFromDrag(currentDrag.x, currentDrag.y, centerAngle, items.size)
+                                        getSelectionFromDrag(currentDrag.x, currentDrag.y, initialState.centerAngle, items.size)
                                     }
 
                                     if (newIndex != currentSelectionIndex) {
@@ -319,6 +293,56 @@ fun RadialMenuWrapper(
         ) {
             content()
         }
+    }
+}
+
+private data class InitialMenuState(
+    val zone: MenuZone,
+    val centerAngle: Float,
+    val edgeHugPositions: List<Offset>?
+)
+
+private fun computeInitialMenuState(
+    absolutePosition: Offset,
+    winW: Float,
+    winH: Float,
+    containerW: Float,
+    containerH: Float,
+    isRtl: Boolean,
+    density: androidx.compose.ui.unit.Density,
+    itemsCount: Int,
+    enableEdgeHugLayout: Boolean
+): InitialMenuState {
+    val edgeThreshPx = with(density) { EDGE_THRESH_DP.dp.toPx() }
+    val zone = RadialMenuMath.detectZone(
+        absolutePosition.x, absolutePosition.y,
+        winW, winH, edgeThreshPx
+    )
+
+    val useEdgeHug = enableEdgeHugLayout &&
+        zone != MenuZone.CENTER && itemsCount > CORNER_ITEM_THRESHOLD
+
+    return if (useEdgeHug) {
+        val itemSizePx = with(density) { ICON_SIZE_DP.dp.toPx() }
+        val gapPx = with(density) { EDGE_HUG_GAP_DP.dp.toPx() }
+        val padPx = with(density) { EDGE_HUG_PAD_DP.dp.toPx() }
+        InitialMenuState(
+            zone = zone,
+            centerAngle = 0f,
+            edgeHugPositions = RadialMenuMath.edgeHugLayout(
+                zone, winW, winH,
+                itemsCount, itemSizePx * 1.5f, gapPx, padPx
+            )
+        )
+    } else {
+        InitialMenuState(
+            zone = zone,
+            centerAngle = RadialMenuMath.calculateCenterAngle(
+                absolutePosition.x, absolutePosition.y,
+                containerW, containerH, isRtl
+            ),
+            edgeHugPositions = null
+        )
     }
 }
 
