@@ -59,8 +59,10 @@ It features **cross-platform haptic feedback**, smooth **animated menu** transit
 
 ```kotlin
 // Android + Desktop (Compose Multiplatform)
-implementation("io.github.gawwr4v:radialmenu:1.0.3")
+implementation("io.github.gawwr4v:radialmenu:1.0.4")
 ```
+
+> **Recommendation:** Use `1.0.4` instead of `1.0.3` for Desktop or full Kotlin Multiplatform consumption. `1.0.4` is the first complete Maven Central release with Android, Desktop, and KMP metadata all published correctly.
 
 ## Quick Start (Compose Multiplatform)
 

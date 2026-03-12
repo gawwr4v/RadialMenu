@@ -5,6 +5,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class EdgeHugLayoutTest {
@@ -207,6 +208,23 @@ class EdgeHugLayoutTest {
         )
         assertEquals(0, RadialMenuMath.getNearestItemSelection(50f, 50f, positions))
         assertEquals(3, RadialMenuMath.getNearestItemSelection(150f, 150f, positions))
+    }
+
+    @Test
+    fun nearestItem_farFromAllButtons_returnsNull() {
+        val positions = listOf(
+            Offset(50f, 50f),
+            Offset(150f, 50f),
+            Offset(50f, 150f),
+            Offset(150f, 150f)
+        )
+        val result = RadialMenuMath.getNearestItemSelection(
+            pointerX = 400f,
+            pointerY = 400f,
+            itemPositions = positions,
+            deadZonePx = 30f
+        )
+        assertNull(result, "Pointer far from all buttons should not select any item")
     }
 
     // --- Integration logic tests ---

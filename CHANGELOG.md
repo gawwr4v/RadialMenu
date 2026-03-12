@@ -5,6 +5,20 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-03-13
+### Bug Fixes
+- Removed all external runtime dependencies from the published POM.
+  The library now declares only Kotlin stdlib — Compose and AndroidX are
+  treated as provided by the consumer's project. v1.0.3 incorrectly
+  declared 9 extra dependencies.
+- Fixed incomplete v1.0.3 Maven Central publish — desktop and KMP metadata
+  artifacts were missing from the v1.0.3 release. v1.0.4 is the first
+  complete KMP release with Android, Desktop, and KMP metadata all present.
+
+### No Breaking Changes
+- Public API is identical to v1.0.3.
+- Consumers upgrading from v1.0.3 to v1.0.4 need only update the version number.
+
 ## [1.0.3] - 2026-03-12
 ### Added
 - Zone detection system (`detectZone`) that identifies corner touches within `EDGE_THRESH_DP` (80dp) of screen edges

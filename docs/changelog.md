@@ -5,6 +5,15 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [<span class="version-badge">Unreleased</span>]
 
+## [<span class="version-badge">1.0.4</span>] - 2026-03-13
+### Bug Fixes
+- Removed all external runtime dependencies from the published POM. Compose and AndroidX are now treated as provided by the consumer project.
+- Fixed the incomplete `1.0.3` Maven Central publish. `1.0.4` is the first complete release with Android, Desktop, and Kotlin Multiplatform metadata artifacts all present.
+
+### No Breaking Changes
+- Public API is identical to `1.0.3`.
+- Upgrading from `1.0.3` only requires updating the version number.
+
 ## [<span class="version-badge">1.0.3</span>] - 2026-03-12
 ### Added
 - Zone detection for corner long-press positions

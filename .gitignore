@@ -1,5 +1,6 @@
 # Gradle
 .gradle/
+.gradle-user/
 build/
 **/build/
 
@@ -55,3 +56,4 @@ out/
 /captures
 .externalNativeBuild
 .cxx
+.gradle-user/

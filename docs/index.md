@@ -18,7 +18,7 @@ hide:
 </p>
 
 ```kotlin title="build.gradle.kts"
-implementation("io.github.gawwr4v:radialmenu:1.0.3")
+implementation("io.github.gawwr4v:radialmenu:1.0.4")
 ```
 
 <div align="center" style="margin: 4rem 0; display: flex; justify-content: center; gap: 4rem; flex-wrap: wrap;">

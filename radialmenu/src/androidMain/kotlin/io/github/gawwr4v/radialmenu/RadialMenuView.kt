@@ -146,6 +146,8 @@ class RadialMenuView @JvmOverloads constructor(
         color = Color.WHITE
         textAlign = Paint.Align.CENTER
     }
+    private val defaultItemBackgroundColor = Color.parseColor("#424242")
+    private val tmpLocationOnScreen = IntArray(2)
 
     // Gesture tracking
     private var lastTapTime: Long = 0L
@@ -303,12 +305,17 @@ class RadialMenuView @JvmOverloads constructor(
                     dragX = deltaX
                     dragY = deltaY
 
-                    val dragDist = sqrt(dragX * dragX + dragY * dragY)
-                    if (dragDist > 30f) {
+                    val dragDistSq = dragX * dragX + dragY * dragY
+                    if (dragDistSq > 30f * 30f) {
                         val positions = edgeHugPositions
                         val newIndex = if (positions != null) {
-                            // Edge-hug mode: select by nearest distance
-                            RadialMenuMath.getNearestItemSelection(x, y, positions)
+                            // Edge-hug mode: select only when the pointer is actually on an item.
+                            RadialMenuMath.getNearestItemSelection(
+                                pointerX = x,
+                                pointerY = y,
+                                itemPositions = positions,
+                                deadZonePx = iconSizePx * 0.75f
+                            )
                         } else {
                             // Radial mode: existing angle-based selection
                             getSelectionFromDrag(dragX, dragY, centerAngle)
@@ -327,8 +334,9 @@ class RadialMenuView @JvmOverloads constructor(
                     }
                     post { invalidate() }
                 } else {
-                    val dist = sqrt((x - startX) * (x - startX) + (y - startY) * (y - startY))
-                    if (dist > touchSlop && !moved) {
+                    val distSq = (x - startX) * (x - startX) + (y - startY) * (y - startY)
+                    val touchSlopSq = touchSlop.toFloat() * touchSlop.toFloat()
+                    if (distSq > touchSlopSq && !moved) {
                         moved = true
                         longPressRunnable?.let { handler.removeCallbacks(it) }
                     }
@@ -372,10 +380,9 @@ class RadialMenuView @JvmOverloads constructor(
             val usableHeight = visibleDisplayRect.height().toFloat()
 
             // Map touch coordinates relative to the visible display frame
-            val locationOnScreen = IntArray(2)
-            getLocationOnScreen(locationOnScreen)
-            val screenX = locationOnScreen[0] + x - visibleDisplayRect.left
-            val screenY = locationOnScreen[1] + y - visibleDisplayRect.top
+            getLocationOnScreen(tmpLocationOnScreen)
+            val screenX = tmpLocationOnScreen[0] + x - visibleDisplayRect.left
+            val screenY = tmpLocationOnScreen[1] + y - visibleDisplayRect.top
 
             val zone = RadialMenuMath.detectZone(screenX, screenY, usableWidth, usableHeight, edgeThreshPx)
             val useEdgeHug = enableEdgeHugLayout &&
@@ -515,10 +522,9 @@ class RadialMenuView @JvmOverloads constructor(
         // position on screen so all coordinates stay correct.
         val isOverlay = overlayView != null
         if (isOverlay) {
-            val loc = IntArray(2)
-            getLocationOnScreen(loc)
+            getLocationOnScreen(tmpLocationOnScreen)
             canvas.save()
-            canvas.translate(loc[0].toFloat(), loc[1].toFloat())
+            canvas.translate(tmpLocationOnScreen[0].toFloat(), tmpLocationOnScreen[1].toFloat())
             // Clip to this view's bounds
             canvas.clipRect(0f, 0f, width.toFloat(), height.toFloat())
         }
@@ -555,7 +561,7 @@ class RadialMenuView @JvmOverloads constructor(
             val scaledSize = iconSizePx * scale
             val bgRadius = scaledSize * 0.75f
 
-            bgCirclePaint.color = if (isSelected) accentColor else Color.parseColor("#424242")
+            bgCirclePaint.color = if (isSelected) accentColor else defaultItemBackgroundColor
             canvas.drawCircle(iconCX, iconCY, bgRadius, bgCirclePaint)
 
             val drawable = if (item.isActive && item.iconActive != null) item.iconActive else item.icon

@@ -21,10 +21,10 @@ jobs:
         run: chmod +x gradlew
 
       - name: Publish to Maven Central
-        timeout-minutes: 15
+        timeout-minutes: 20
         uses: nick-fields/retry@v3
         with:
-          timeout_minutes: 15
+          timeout_minutes: 20
           max_attempts: 3
           command: ./gradlew :radialmenu:publishAllPublicationsToCentralPortal --no-daemon
         env:

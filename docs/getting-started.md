@@ -22,7 +22,7 @@ Add the dependency to your app's `build.gradle` file:
 
     ```kotlin
     dependencies {
-        implementation("io.github.gawwr4v:radialmenu:1.0.3")
+        implementation("io.github.gawwr4v:radialmenu:1.0.4")
     }
     ```
 
@@ -30,7 +30,7 @@ Add the dependency to your app's `build.gradle` file:
 
     ```groovy
     dependencies {
-        implementation 'io.github.gawwr4v:radialmenu:1.0.3'
+        implementation 'io.github.gawwr4v:radialmenu:1.0.4'
     }
     ```
 
