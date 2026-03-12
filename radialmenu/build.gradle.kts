@@ -222,10 +222,9 @@ fun MavenPublication.configurePom() {
 }
 
 nmcp {
-    centralPortal {
-        println("--- NMCP PORTAL DEBUG ---")
-        println("Portal class: ${this::class.java.name}")
-        this::class.java.methods.forEach { println("Method: ${it.name}") }
-        println("--- NMCP PORTAL END ---")
+    publishAllPublications {
+        username.set((project.findProperty("ossrhUsername") as? String) ?: "")
+        password.set((project.findProperty("ossrhPassword") as? String) ?: "")
+        publicationType.set("USER_MANAGED")
     }
 }
