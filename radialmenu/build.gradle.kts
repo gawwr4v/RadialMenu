@@ -219,11 +219,10 @@ fun MavenPublication.configurePom() {
         }
     }
 }
-
 nmcp {
-    publishAllPublications {
-        username.set((project.findProperty("ossrhUsername") as? String) ?: "")
-        password.set((project.findProperty("ossrhPassword") as? String) ?: "")
-        publicationType.set("USER_MANAGED")
+    centralPortal {
+        username = (project.findProperty("ossrhUsername") as? String) ?: ""
+        password = (project.findProperty("ossrhPassword") as? String) ?: ""
+        publishingType = "USER_MANAGED"
     }
 }
