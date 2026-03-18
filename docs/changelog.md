@@ -6,7 +6,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
-## [1.0.4] - 2026-03-13
+## [1.0.4] - 2026-03-19
 
 ### New Features
 - Added `RadialMenuTriggerMode` with:
