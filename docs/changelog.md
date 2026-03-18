@@ -1,74 +1,75 @@
 # Changelog
-All notable changes to RadialMenu will be documented here.
-Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+
+All notable changes to RadialMenu are documented here.  
+Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)  
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
-## [<span class="version-badge">Unreleased</span>]
+## [Unreleased]
 
-## [<span class="version-badge">1.0.4</span>] - 2026-03-13
+## [1.0.4] - 2026-03-13
+
+### New Features
+- Added `RadialMenuTriggerMode` with:
+  - `Auto` (default)
+  - `LongPress(positionAware = true)`
+  - `SecondaryClick(positionAware = false)`
+  - `KeyboardHold(key)`
+- `Auto` resolves by platform:
+  - Android -> `LongPress(positionAware = true)`
+  - Desktop -> `SecondaryClick(positionAware = false)`
+- Added desktop right-click trigger support (`SecondaryClick`).
+- Added keyboard hold trigger support (`KeyboardHold`) for Compose wrapper.
+- Added smart edge-hug gating: center-spawned keyboard menus skip edge-hug automatically.
+
 ### Bug Fixes
-- Removed all external runtime dependencies from the published POM. Compose and AndroidX are now treated as provided by the consumer project.
-- Fixed the incomplete `1.0.3` Maven Central publish. `1.0.4` is the first complete release with Android, Desktop, and Kotlin Multiplatform metadata artifacts all present.
+- Fixed incomplete `1.0.3` Maven Central publish; `1.0.4` is the first complete Android + Desktop + KMP metadata release.
+- Removed unintended runtime dependency declarations from published POM.
+  - POM now declares only `kotlin-stdlib`.
+  - Compose/AndroidX are treated as provided by consuming apps.
+- Fixed desktop KeyboardHold key capture reliability in Compose flows.
+- Fixed KeyboardHold hover behavior:
+  - no selection on key-down
+  - continuous hover updates while key is held
+  - commit on key-up
+- Switched center-spawned KeyboardHold selection to angle-based pie-slice logic.
+- Added center dead zone to prevent accidental hover near origin.
+- Fixed KeyboardHold directional calibration:
+  - flick direction is computed from cursor position at key-down (flick origin), not menu center.
+- Updated SecondaryClick desktop behavior:
+  - spawns at cursor position
+  - uses pie-style directional selection
+  - defaults to neutral orientation (`positionAware = false`)
 
-### No Breaking Changes
-- Public API is identical to `1.0.3`.
-- Upgrading from `1.0.3` only requires updating the version number.
+### API Changes
+- `LongPress` and `SecondaryClick` changed from `object` to `data class` with `positionAware`.
+- Added `triggerMode` parameter on `RadialMenuWrapper`.
+- Added `triggerMode` property on `RadialMenuView`.
+- Added `defaultTriggerMode` expect/actual.
 
-## [<span class="version-badge">1.0.3</span>] - 2026-03-12
+## [1.0.3] - 2026-03-12
+
 ### Added
-- Zone detection for corner long-press positions
-- Edge-hug layout: items hug the two available edges when triggered from a corner (4+ items)
-- Nearest-item drag selection in edge-hug mode
-- New tunable constants: `EDGE_THRESH_DP`, `CORNER_ITEM_THRESHOLD`
-- `enableEdgeHugLayout` opt-in parameter for `RadialMenuWrapper` and `RadialMenuView` (defaults to `false`)
-- Demo app: item count slider (2-8) and edge-hug toggle switch
+- Corner zone detection.
+- Edge-hug L-shaped layout for corners when item count is 4+.
+- Nearest-item distance selection in edge-hug mode.
+- `enableEdgeHugLayout` for Compose wrapper and Android View (opt-in, default `false`).
 
 ### Fixed
-- Items no longer clip off-screen when the radial menu is triggered from a corner
-- Menu items now render above all other UI elements (toolbars, FABs, bottom nav)
-- Zone detection uses true usable screen area (system bar insets excluded)
+- Prevented item clipping in tight corner scenarios.
+- Ensured overlay draws above common UI surfaces (toolbars/FAB/navigation).
+- Improved true corner detection using usable content area.
 
-### No Breaking Changes
-- Public API is backwards compatible. New parameters have safe defaults.
+## [1.0.2] - 2026-03-10
 
-## [<span class="version-badge">1.0.2</span>] - 2026-03-10
 ### Fixed
-- Migrated publishing plugin to official `com.gradleup.nmcp` publisher for Maven Central Portal Portal API compatibility
+- Migrated publishing plugin to official `com.gradleup.nmcp` for Maven Central Portal compatibility.
 
-## [<span class="version-badge">1.0.1</span>] - 2026-03-09
+## [1.0.1] - 2026-03-09
+
 ### Fixed
-- Migrated publishing from deprecated s01.oss.sonatype.org to new Maven Central Portal API
+- Migrated publishing from deprecated Sonatype endpoint to Maven Central Portal API.
 
-## [<span class="version-badge">1.0.0</span>], 2026-03-08
+## [1.0.0] - 2026-03-08
+
 ### Added
-- Initial release of RadialMenu for Android and Desktop
-- Long-press to activate, drag-to-select gesture system
-- Smart edge-aware angle calculation (never obscured by finger)
-- Support for unlimited items (2 to 8 recommended)
-- Item badge support (count and custom text)
-- Toggle icon states (active/inactive per item)
-- Haptic feedback on activation and selection
-- Dynamic item scaling on hover (configurable)
-- Drag direction indicator line
-- RadialMenuAnimationConfig with 4 presets (default, snappy, bouncy, slow)
-- Spring physics animation option
-- RadialMenuColors theming system
-- RadialMenuView for XML/View-based Android apps
-- RadialMenuWrapper Composable for Compose Multiplatform (Android + Desktop)
-- Accessibility support (contentDescription, announceForAccessibility, semantics)
-- Zero external dependencies
-- Kotlin-first API with Java compatibility via @JvmOverloads
-- Full KDoc documentation on all public API
-- ProGuard/R8 consumer rules
-- Dark/light/auto theme support via RadialMenuColors.dark(), .light(), .autoTheme()
-- RTL (right-to-left) layout direction support
-- Android Studio @Preview composables for RadialMenuCanvas
-- RadialMenuMath is now public API for custom implementations
-- Snapshot release support
-- SECURITY.md, CODE_OF_CONDUCT.md, SUPPORT.md
-- Min SDK 21 (Android 5.0)
-
-<div class="seo-keywords" aria-hidden="true">
-  radialmenu android release notes, circular menu kotlin updates, pie menu compose changelog,
-  android radial menu version history
-</div>
+- Initial release for Android + Desktop (KMP).

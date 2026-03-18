@@ -27,8 +27,6 @@ import android.view.accessibility.AccessibilityEvent
 import android.widget.FrameLayout
 import androidx.compose.ui.geometry.Offset
 import androidx.annotation.Keep
-import kotlin.math.abs
-import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -86,6 +84,27 @@ class RadialMenuView @JvmOverloads constructor(
      * @since 1.0.3
      */
     var enableEdgeHugLayout: Boolean = false
+
+    /**
+     * Controls how the menu is triggered in [RadialMenuView].
+     *
+     * [RadialMenuTriggerMode.LongPress] is the default and fully supported.
+     * [RadialMenuTriggerMode.SecondaryClick] is supported for mouse/desktop-class
+     * input on Android form factors.
+     *
+     * [RadialMenuTriggerMode.KeyboardHold] is accepted for API symmetry but not
+     * supported in this View-based implementation. Use [RadialMenuWrapper] for
+     * keyboard-hold behavior.
+     *
+     * @since 1.0.4
+     */
+    var triggerMode: RadialMenuTriggerMode = RadialMenuTriggerMode.LongPress(positionAware = true)
+        set(value) {
+            field = value
+            if (value is RadialMenuTriggerMode.KeyboardHold) {
+                logKeyboardHoldNotSupported()
+            }
+        }
 
     // XML Attributes
     private var accentColor: Int = Color.WHITE
@@ -157,6 +176,7 @@ class RadialMenuView @JvmOverloads constructor(
     private var moved: Boolean = false
     private var startX: Float = 0f
     private var startY: Float = 0f
+    private var keyboardHoldWarningLogged: Boolean = false
 
     // Dynamic animation state: one scale per item
     private var itemScales: FloatArray = FloatArray(0)
@@ -276,15 +296,54 @@ class RadialMenuView @JvmOverloads constructor(
     private fun getSelectionFromDrag(dragX: Float, dragY: Float, centerAngle: Float): Int? =
         RadialMenuMath.getSelectionFromDrag(dragX, dragY, centerAngle, menuItems.size)
 
+    private fun logKeyboardHoldNotSupported() {
+        if (!keyboardHoldWarningLogged) {
+            Log.w(
+                TAG,
+                "RadialMenuTriggerMode.KeyboardHold is not supported in RadialMenuView. " +
+                    "Use RadialMenuWrapper for keyboard-hold triggers."
+            )
+            keyboardHoldWarningLogged = true
+        }
+    }
+
+    private fun effectiveTriggerMode(): RadialMenuTriggerMode {
+        return when (val mode = triggerMode) {
+            RadialMenuTriggerMode.Auto -> RadialMenuTriggerMode.LongPress(positionAware = true)
+            is RadialMenuTriggerMode.KeyboardHold -> {
+                logKeyboardHoldNotSupported()
+                RadialMenuTriggerMode.LongPress(positionAware = true)
+            }
+
+            else -> mode
+        }
+    }
+
+    private fun isSecondaryButtonEvent(event: MotionEvent): Boolean {
+        return (event.buttonState and MotionEvent.BUTTON_SECONDARY) != 0
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (menuItems.isEmpty()) return super.onTouchEvent(event)
 
         val x = event.x
         val y = event.y
+        val effectiveTriggerMode = effectiveTriggerMode()
+        val resolvedPositionAware = when (effectiveTriggerMode) {
+            is RadialMenuTriggerMode.LongPress -> effectiveTriggerMode.positionAware
+            is RadialMenuTriggerMode.SecondaryClick -> effectiveTriggerMode.positionAware
+            is RadialMenuTriggerMode.KeyboardHold -> false
+            RadialMenuTriggerMode.Auto -> false
+        }
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
+                if (effectiveTriggerMode is RadialMenuTriggerMode.SecondaryClick && isSecondaryButtonEvent(event)) {
+                    openMenuAt(x, y, isCenterSpawned = false, isPositionAware = resolvedPositionAware)
+                    return true
+                }
+
                 startX = x
                 startY = y
                 moved = false
@@ -292,10 +351,18 @@ class RadialMenuView @JvmOverloads constructor(
                 // Post a delayed runnable to trigger the radial menu if the user 
                 // holds their finger down without moving significantly.
                 longPressRunnable = Runnable {
-                    handleLongPress(x, y)
+                    handleLongPress(x, y, resolvedPositionAware)
                 }
-                handler.postDelayed(longPressRunnable!!, LONG_PRESS_TIMEOUT_MS)
+                if (effectiveTriggerMode is RadialMenuTriggerMode.LongPress) {
+                    handler.postDelayed(longPressRunnable!!, LONG_PRESS_TIMEOUT_MS)
+                }
                 return true
+            }
+            MotionEvent.ACTION_BUTTON_PRESS -> {
+                if (effectiveTriggerMode is RadialMenuTriggerMode.SecondaryClick && isSecondaryButtonEvent(event)) {
+                    openMenuAt(x, y, isCenterSpawned = false, isPositionAware = resolvedPositionAware)
+                    return true
+                }
             }
             MotionEvent.ACTION_MOVE -> {
                 if (isMenuOpen) {
@@ -342,7 +409,7 @@ class RadialMenuView @JvmOverloads constructor(
                     }
                 }
             }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_BUTTON_RELEASE -> {
                 longPressRunnable?.let { handler.removeCallbacks(it) }
 
                 if (isMenuOpen) {
@@ -351,7 +418,10 @@ class RadialMenuView @JvmOverloads constructor(
                         onItemSelected?.invoke(menuItems[currentSelectionIndex!!])
                     }
                     closeMenu()
-                } else if (!moved && event.actionMasked == MotionEvent.ACTION_UP) {
+                } else if (
+                    effectiveTriggerMode is RadialMenuTriggerMode.LongPress &&
+                    !moved && event.actionMasked == MotionEvent.ACTION_UP
+                ) {
                     val timeSinceLastTap = System.currentTimeMillis() - lastTapTime
                     if (timeSinceLastTap in 1..<DOUBLE_TAP_TIMEOUT_MS) {
                         onDoubleTap?.invoke()
@@ -366,60 +436,78 @@ class RadialMenuView @JvmOverloads constructor(
         return super.onTouchEvent(event)
     }
 
-    private fun handleLongPress(x: Float, y: Float) {
+    private fun handleLongPress(x: Float, y: Float, isPositionAware: Boolean) {
         if (!moved && menuItems.isNotEmpty()) {
-            vibrate(50)
-            val density = context.resources.displayMetrics.density
-            val edgeThreshPx = RadialMenuDefaults.EDGE_THRESH_DP * density
-
-            // Use the window's visible display frame (excluding system bars)
-            // for zone detection so we only detect true screen corners,
-            // not edges near toolbars or nav bars.
-            rootView.getWindowVisibleDisplayFrame(visibleDisplayRect)
-            val usableWidth = visibleDisplayRect.width().toFloat()
-            val usableHeight = visibleDisplayRect.height().toFloat()
-
-            // Map touch coordinates relative to the visible display frame
-            getLocationOnScreen(tmpLocationOnScreen)
-            val screenX = tmpLocationOnScreen[0] + x - visibleDisplayRect.left
-            val screenY = tmpLocationOnScreen[1] + y - visibleDisplayRect.top
-
-            val zone = RadialMenuMath.detectZone(screenX, screenY, usableWidth, usableHeight, edgeThreshPx)
-            val useEdgeHug = enableEdgeHugLayout &&
-                zone != RadialMenuMath.MenuZone.CENTER &&
-                menuItems.size > RadialMenuDefaults.CORNER_ITEM_THRESHOLD
-
-            // Use the view's own dimensions for layout positioning (unchanged)
-            val screenWidth = width.toFloat()
-            val screenHeight = height.toFloat()
-
-            if (useEdgeHug) {
-                val itemSizePx = RadialMenuDefaults.ICON_SIZE_DP * density * 1.5f
-                val gapPx = RadialMenuDefaults.EDGE_HUG_GAP_DP * density
-                val padPx = RadialMenuDefaults.EDGE_HUG_PAD_DP * density
-                edgeHugPositions = RadialMenuMath.edgeHugLayout(
-                    zone, screenWidth, screenHeight,
-                    menuItems.size, itemSizePx, gapPx, padPx
-                )
-                centerAngle = 0f // unused in edge-hug mode
-            } else {
-                edgeHugPositions = null
-                centerAngle = calculateCenterAngle(x, y, screenWidth, screenHeight)
-            }
-
-            isMenuOpen = true
-            touchX = x
-            touchY = y
-            dragX = 0f
-            dragY = 0f
-            currentSelectionIndex = null
-
-            resetAllScales()
-            attachOverlayToDecorView()
-
-            onMenuOpened?.invoke()
-            post { invalidate() }
+            openMenuAt(x, y, isCenterSpawned = false, isPositionAware = isPositionAware)
         }
+    }
+
+    private fun openMenuAt(
+        x: Float,
+        y: Float,
+        isCenterSpawned: Boolean,
+        isPositionAware: Boolean
+    ) {
+        if (menuItems.isEmpty()) return
+
+        vibrate(50)
+        val density = context.resources.displayMetrics.density
+        val edgeThreshPx = RadialMenuDefaults.EDGE_THRESH_DP * density
+
+        // Use the window's visible display frame (excluding system bars)
+        // for zone detection so we only detect true screen corners,
+        // not edges near toolbars or nav bars.
+        rootView.getWindowVisibleDisplayFrame(visibleDisplayRect)
+        val usableWidth = visibleDisplayRect.width().toFloat()
+        val usableHeight = visibleDisplayRect.height().toFloat()
+
+        // Map touch coordinates relative to the visible display frame
+        getLocationOnScreen(tmpLocationOnScreen)
+        val screenX = tmpLocationOnScreen[0] + x - visibleDisplayRect.left
+        val screenY = tmpLocationOnScreen[1] + y - visibleDisplayRect.top
+
+        val zone = RadialMenuMath.detectZone(screenX, screenY, usableWidth, usableHeight, edgeThreshPx)
+        val useEdgeHug = shouldUseEdgeHugLayout(
+            enableEdgeHugLayout = enableEdgeHugLayout,
+            isCenterSpawned = isCenterSpawned,
+            zone = zone,
+            itemsCount = menuItems.size
+        )
+
+        // Use the view's own dimensions for layout positioning (unchanged)
+        val screenWidth = width.toFloat()
+        val screenHeight = height.toFloat()
+
+        if (useEdgeHug) {
+            val itemSizePx = RadialMenuDefaults.ICON_SIZE_DP * density * 1.5f
+            val gapPx = RadialMenuDefaults.EDGE_HUG_GAP_DP * density
+            val padPx = RadialMenuDefaults.EDGE_HUG_PAD_DP * density
+            edgeHugPositions = RadialMenuMath.edgeHugLayout(
+                zone, screenWidth, screenHeight,
+                menuItems.size, itemSizePx, gapPx, padPx
+            )
+            centerAngle = 0f // unused in edge-hug mode
+        } else {
+            edgeHugPositions = null
+            centerAngle = if (isPositionAware) {
+                calculateCenterAngle(x, y, screenWidth, screenHeight)
+            } else {
+                0f
+            }
+        }
+
+        isMenuOpen = true
+        touchX = x
+        touchY = y
+        dragX = 0f
+        dragY = 0f
+        currentSelectionIndex = null
+
+        resetAllScales()
+        attachOverlayToDecorView()
+
+        onMenuOpened?.invoke()
+        post { invalidate() }
     }
 
     private fun closeMenu() {

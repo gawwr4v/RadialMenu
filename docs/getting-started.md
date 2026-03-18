@@ -1,22 +1,21 @@
 ---
-title: Getting Started — RadialMenu
-description: How to install and integrate RadialMenu — a radial, circular, and pie menu library — into your Android project in under 5 minutes.
+title: Getting Started - RadialMenu
+description: Install and integrate RadialMenu in Compose Multiplatform or Android Views.
 ---
 
 # Getting Started
 
-RadialMenu is an Android library for building radial menus — sometimes called circular menus,
-pie menus, or arc menus — with full support for Jetpack Compose and traditional Android Views.
+RadialMenu supports:
+- Compose Multiplatform (Android + Desktop JVM)
+- Android View system (`RadialMenuView`)
 
 ## Requirements
 
-- **Min SDK:** 21 (Android 5.0 Lollipop) or higher
-- **Kotlin:** 1.9.0 or higher
-- Jetpack Compose (if using the Compose wrapper)
+- Min SDK: 21 (Android)
+- Kotlin: 2.1.20+ recommended
+- Compose dependencies in your app/module if you use Compose API
 
 ## Installation
-
-Add the dependency to your app's `build.gradle` file:
 
 === "Kotlin DSL (build.gradle.kts)"
 
@@ -34,53 +33,111 @@ Add the dependency to your app's `build.gradle` file:
     }
     ```
 
-## Basic Setup
+## Compose Dependency Setup (Required)
 
-### Jetpack Compose (Multiplatform)
+RadialMenu does not export Compose transitively. If you use the Compose API, add Compose dependencies in your own module.
 
-RadialMenu requires two parts in Compose: a `RadialMenuWrapper` to intercept the long-press gesture around your content, and a `RadialMenuOverlay` placed at the root of your layout to draw the actual menu on top of everything else.
+Example (KMP source-set style):
 
 ```kotlin
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.painterResource
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material3)
+            implementation(compose.ui)
+        }
+        desktopMain.dependencies {
+            implementation(compose.desktop.currentOs)
+        }
+    }
+}
+```
+
+## Compose Setup
+
+`RadialMenuWrapper` handles trigger detection.  
+`RadialMenuOverlay` renders the menu above your UI.
+
+```kotlin
 import io.github.gawwr4v.radialmenu.*
-import androidx.compose.foundation.layout.Box
 
 @Composable
-fun MyScreen() {
+fun DemoScreen() {
     val items = listOf(
-        RadialMenuItem(id = 1, icon = painterResource(R.drawable.ic_home), label = "Home"),
-        RadialMenuItem(id = 2, icon = painterResource(R.drawable.ic_search), label = "Search"),
-        RadialMenuItem(id = 3, icon = painterResource(R.drawable.ic_settings), label = "Settings")
+        RadialMenuItem(id = 1, icon = homePainter, label = "Home"),
+        RadialMenuItem(id = 2, icon = searchPainter, label = "Search"),
+        RadialMenuItem(id = 3, icon = settingsPainter, label = "Settings")
     )
 
     Box {
-        // 1. Wrap your content to detect gestures
         RadialMenuWrapper(
             items = items,
             onItemSelected = { item ->
                 println("Selected: ${item.label}")
             }
         ) {
-            // Your normal screen content goes here
-            // Long pressing anywhere in this wrapper triggers the menu
-            Text("Long press me!")
+            Content()
         }
-        
-        // 2. Add the overlay at the highest level of your Box/Z-Index
+
         RadialMenuOverlay(items = items)
     }
 }
 ```
 
-!!! warning "Important"
-    `RadialMenuOverlay` must be placed at the **root** of your Compose hierarchy
-    inside `setContent {}` — not inside a nested composable. If it is constrained
-    by a parent layout, the menu will not render at full screen dimensions.
+## Trigger Modes (Compose)
 
-### Legacy Android View (XML)
+`Auto` is the default and recommended:
 
-If you are not using Compose, you can add `RadialMenuView` directly to your XML layout as an overlay.
+```kotlin
+RadialMenuWrapper(
+    items = items,
+    onItemSelected = { /* ... */ }
+) { Content() }
+```
+
+Auto resolves to:
+- Android: `LongPress(positionAware = true)`
+- Desktop: `SecondaryClick(positionAware = false)`
+
+Explicit examples:
+
+```kotlin
+// Mobile-first long press
+triggerMode = RadialMenuTriggerMode.LongPress(positionAware = true)
+
+// Desktop right-click
+triggerMode = RadialMenuTriggerMode.SecondaryClick(positionAware = false)
+
+// Keyboard hold (menu at center, commit on key up)
+triggerMode = RadialMenuTriggerMode.KeyboardHold(Key.Q)
+```
+
+## Desktop Notes
+
+- Default desktop trigger is right-click (`SecondaryClick`).
+- Keyboard hold opens menu at center.
+- Keyboard hold directional selection is based on cursor position at key-down (flick origin), not menu center.
+
+## Edge-Hug Layout
+
+Enable edge-hug only if you want corner L-shape behavior:
+
+```kotlin
+RadialMenuWrapper(
+    items = items,
+    onItemSelected = { /* ... */ },
+    enableEdgeHugLayout = true
+) { Content() }
+```
+
+Rules:
+- Applies in corners with 4+ items.
+- Uses nearest-item distance selection in edge-hug mode.
+- Skipped for center-spawned keyboard menus.
+
+## Android View Setup (XML)
 
 ```xml
 <io.github.gawwr4v.radialmenu.RadialMenuView
@@ -92,50 +149,20 @@ If you are not using Compose, you can add `RadialMenuView` directly to your XML 
     app:rm_accentColor="@color/black" />
 ```
 
-### Desktop (JVM)
-
-The Compose Multiplatform examples above work identically on Desktop JVM (Windows, macOS, Linux). No additional setup is required - just use the same `RadialMenuWrapper` and `RadialMenuOverlay` composables inside your Desktop `application { Window { ... } }` block. Mouse long-press triggers the menu the same way touch does on Android.
-
-## Your First Menu (Android Views)
-
-In your Activity or Fragment, supply the items and the selection listener. The library automatically handles the long-press gesture, edge-aware coordinate geometry, and the open/close animations. Use the `toPainter()` extension function to bridge native Android `Drawable` resources into the Compose `Painter` objects required by the library.
-
 ```kotlin
-import io.github.gawwr4v.radialmenu.RadialMenuItem
-import io.github.gawwr4v.radialmenu.toPainter
-import androidx.appcompat.content.res.AppCompatResources
-
 val radialMenu = findViewById<RadialMenuView>(R.id.radial_menu)
-
-// toPainter() is a RadialMenu extension function that bridges Android Drawables
-// into the Compose Painter interface used internally by the library
-val homeIcon = AppCompatResources.getDrawable(context, R.drawable.ic_home)!!.toPainter()
-val searchIcon = AppCompatResources.getDrawable(context, R.drawable.ic_search)!!.toPainter()
-val settingsIcon = AppCompatResources.getDrawable(context, R.drawable.ic_settings)!!.toPainter()
-
-val items = listOf(
-    RadialMenuItem(id = 1, icon = homeIcon, label = "Home"),
-    RadialMenuItem(id = 2, icon = searchIcon, label = "Search"),
-    RadialMenuItem(id = 3, icon = settingsIcon, label = "Settings")
-)
-
 radialMenu.setItems(items)
-
+radialMenu.enableEdgeHugLayout = true
+radialMenu.triggerMode = RadialMenuTriggerMode.LongPress(positionAware = true)
 radialMenu.onItemSelected = { item ->
-    Toast.makeText(context, "Selected: ${item.label}", Toast.LENGTH_SHORT).show()
+    // handle selection
 }
-
-// Optional: Intercept standard single and double taps 
-// that happen when the menu is NOT open
-radialMenu.onTap = { /* Handle normal click */ }
 ```
+
+`RadialMenuView` supports `LongPress` and `SecondaryClick`.  
+`KeyboardHold` is not implemented in `RadialMenuView`; use Compose wrapper for that trigger.
 
 ## Next Steps
 
-- Explore [Customization](customization.md) to theme the menu to your app.
-- Check out the full [API Reference](api/index.html) for advanced usage.
-
-<div class="seo-keywords" aria-hidden="true">
-  install radial menu android, add circular menu jetpack compose, radial menu android view setup,
-  kotlin pie menu integration, how to implement arc menu android
-</div>
+- [Customization](customization.md)
+- [Changelog](changelog.md)

@@ -1,5 +1,5 @@
 site_name: RadialMenu
-site_description: RadialMenu is a lightweight Android library for radial, circular, and pie menus built for Jetpack Compose and Android Views. Gesture-driven, fully customizable, and Kotlin-first.
+site_description: RadialMenu is a Kotlin Multiplatform radial, circular, and pie menu library for Compose Multiplatform and Android Views.
 site_url: https://gawwr4v.github.io/RadialMenu
 repo_url: https://github.com/gawwr4v/RadialMenu
 repo_name: RadialMenu
@@ -10,7 +10,6 @@ nav:
   - Customization: customization.md
   - Radial vs Circular vs Pie: alternatives.md
   - Changelog: changelog.md
-  - API Reference: api/index.html
 
 theme:
   name: material
@@ -58,9 +57,6 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - admonition
   - attr_list
   - md_in_html

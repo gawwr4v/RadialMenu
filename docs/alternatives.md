@@ -1,43 +1,53 @@
 ---
-title: Radial Menu vs Circular Menu vs Pie Menu — What's the Difference?
-description: Radial menu, circular menu, pie menu, arc menu, and wheel menu all describe the same Android UI pattern. RadialMenu implements all of them for Jetpack Compose and Android Views.
+title: Radial Menu vs Circular Menu vs Pie Menu
+description: Terminology and practical interaction differences, plus where RadialMenu fits.
 ---
 
-# Radial Menu, Circular Menu, Pie Menu — All the Same Thing
+# Radial Menu, Circular Menu, and Pie Menu
 
-Radial menu, circular menu, pie menu, arc menu, and wheel menu all describe the exact same UI interaction pattern: a set of actions arranged in a circular formation around a central trigger point, typically revealed by a long-press or swipe gesture.
+In practice these terms are usually used for the same interaction family:
+- Actions are laid out around a center point
+- Users select by directional movement rather than scanning a long list
 
-## What Makes a Good Radial Menu?
+The naming varies by community, but the core model is direction-first selection.
 
-- **Gesture activation:** Seamlessly triggered by a continued touch or long-press without lifting the finger.
-- **Equal spacing:** Actions divided evenly around the circle for predictable muscle memory.
-- **Icon clarity:** Distinct visual markers since text doesn't fit elegantly in angled slices.
-- **Animation feedback:** Snappy, physics-based expansion that reinforces the gesture.
-- **Touch target size:** Sufficiently large arc sections to prevent accidental selections.
+## What RadialMenu Supports
 
-## How RadialMenu Implements This Pattern
+- Radial fan behavior (`LongPress`, `positionAware` options)
+- Pie-style directional behavior (`SecondaryClick`, `KeyboardHold`)
+- Corner fallback (`enableEdgeHugLayout`) for constrained space
 
-RadialMenu brings this premium pattern to Android by offering a highly customizable, lightweight component that works natively in both Jetpack Compose and traditional Android Views. It mathematically guarantees equal spacing, handles all edge-bounding logic, and uses fluid spring animations.
+## Trigger Patterns by Platform
 
-```kotlin title="build.gradle.kts"
-implementation("io.github.gawwr4v:radialmenu:1.0.3")
-```
+### Android
 
-## Radial Menu vs Bottom Sheet vs Context Menu
+- Default: long press (`Auto -> LongPress(positionAware = true)`)
+- Optional: explicit long press with or without position-aware angle adjustment
 
-| Pattern | Trigger | Best For | Android Support |
-|---------|---------|----------|-----------------|
-| Radial Menu | Long-press/Drag | Quick, muscle-memory actions | Via RadialMenu library |
-| Bottom Sheet | Tap/Swipe | Complex forms or deep content | Native |
-| Context Menu | Long-press | Long vertical lists of text actions | Native |
-| Floating Action | Tap | Single primary screen action | Native |
+### Desktop
 
-## Ready to Build?
+- Default: right-click (`Auto -> SecondaryClick(positionAware = false)`)
+- Optional: keyboard hold (`KeyboardHold(Key.Q)`)
 
-- [Getting Started](getting-started.md)
-- [API Reference](api/index.html)
+For keyboard hold:
+- Menu appears at center
+- Selection is angle-based pie-slice
+- Flick direction starts from cursor position at key-down
+- Selection commits on key release
 
-<div class="seo-keywords" aria-hidden="true">
-  radial menu vs circular menu, pie menu vs arc menu, android wheel menu alternatives,
-  gesture menu comparison android, best radial menu library
-</div>
+## Radial Menu vs Other UI Patterns
+
+| Pattern | Trigger | Best for | Typical tradeoff |
+|---|---|---|---|
+| Radial/Pie menu | Directional gesture | Repeated quick actions | Requires directional learnability |
+| Bottom sheet | Tap/swipe | Dense content/forms | Slower repeated action selection |
+| Linear context menu | Tap/long press | Text-heavy action lists | More visual scanning |
+| Single FAB action | Tap | One primary action | Limited action density |
+
+## Implementation Tip
+
+If your users are mostly desktop:
+- Keep `Auto` or set `SecondaryClick(positionAware = false)` explicitly.
+
+If your users are mostly touch:
+- Keep `Auto` or set `LongPress(positionAware = true)`.

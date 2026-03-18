@@ -1,8 +1,8 @@
 import java.net.URL
-import java.time.Duration
 import org.gradle.plugins.signing.Sign
 import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
 import org.gradle.api.publish.maven.tasks.PublishToMavenLocal
+import java.time.Duration
 
 plugins {
     kotlin("multiplatform")
@@ -34,25 +34,27 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.ui)
+            compileOnly(compose.runtime)
+            compileOnly(compose.foundation)
+            compileOnly(compose.material3)
+            compileOnly(compose.ui)
         }
         androidMain.dependencies {
-            implementation("androidx.core:core-ktx:1.13.1")
-            implementation("androidx.compose.ui:ui-tooling-preview:1.7.3")
-            implementation("androidx.compose.ui:ui-tooling:1.7.3")
+            compileOnly("androidx.core:core-ktx:1.13.1")
         }
         val desktopMain by getting {
             dependencies {
-                implementation(compose.desktop.currentOs)
+                compileOnly(compose.desktop.currentOs)
             }
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(kotlin("test-common"))
             implementation(kotlin("test-annotations-common"))
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material3)
+            implementation(compose.ui)
         }
         val androidInstrumentedTest by getting {
             dependencies {
@@ -67,6 +69,10 @@ kotlin {
 
 dependencies {
     dokkaHtmlPlugin("org.jetbrains.dokka:android-documentation-plugin:1.9.20")
+}
+
+configurations.configureEach {
+    resolutionStrategy.force("org.jetbrains:annotations:23.0.0")
 }
 
 extensions.configure<com.android.build.api.dsl.LibraryExtension> {
@@ -158,16 +164,29 @@ val javadocJar by tasks.registering(Jar::class) {
 }
 
 afterEvaluate {
+    val signingKeyId = project.findProperty("signing.keyId") as String?
+    val signingKey = project.findProperty("signing.key") as String?
+    val signingPassword = project.findProperty("signing.password") as String?
+    val hasSigningCredentials = !signingKeyId.isNullOrBlank() &&
+        !signingKey.isNullOrBlank() &&
+        !signingPassword.isNullOrBlank()
+
     // Fix signing task ordering for KMP publications
     tasks.withType<PublishToMavenRepository>().configureEach {
-        dependsOn(tasks.withType<Sign>())
+        if (hasSigningCredentials) {
+            dependsOn(tasks.withType<Sign>())
+        }
     }
     tasks.withType<PublishToMavenLocal>().configureEach {
-        dependsOn(tasks.withType<Sign>())
+        if (hasSigningCredentials) {
+            dependsOn(tasks.withType<Sign>())
+        }
     }
-    // Prevent signing tasks from running in parallel
-    tasks.withType<Sign>().configureEach {
-        mustRunAfter(tasks.withType<Sign>().filter { it.name != this.name })
+    if (hasSigningCredentials) {
+        // Prevent signing tasks from running in parallel
+        tasks.withType<Sign>().configureEach {
+            mustRunAfter(tasks.withType<Sign>().filter { it.name != this.name })
+        }
     }
 
     publishing {
@@ -180,14 +199,12 @@ afterEvaluate {
         }
     }
     signing {
-        val signingKeyId = project.findProperty("signing.keyId") as String?
-        val signingKey = project.findProperty("signing.key") as String?
-        val signingPassword = project.findProperty("signing.password") as String?
-        
-        if (signingKeyId != null && signingKey != null && signingPassword != null) {
+        if (hasSigningCredentials) {
             useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+            sign(publishing.publications)
+        } else {
+            logger.lifecycle("Signing credentials not found; skipping signing for local/uncredentialed builds.")
         }
-        sign(publishing.publications)
     }
 }
 
@@ -222,9 +239,10 @@ fun MavenPublication.configurePom() {
 }
 
 nmcp {
-    publishAllPublications {
-        username.set((project.findProperty("ossrhUsername") as? String) ?: "")
-        password.set((project.findProperty("ossrhPassword") as? String) ?: "")
-        publicationType.set("USER_MANAGED")
+    centralPortal {
+        username = (project.findProperty("ossrhUsername") as? String) ?: ""
+        password = (project.findProperty("ossrhPassword") as? String) ?: ""
+        publishingType = "USER_MANAGED"
+        verificationTimeout = Duration.ofMinutes(20)
     }
 }

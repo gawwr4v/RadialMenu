@@ -124,8 +124,9 @@ object RadialMenuMath {
         selectionDeadZoneDeg: Float = RadialMenuDefaults.SELECTION_DEAD_ZONE_DEG
     ): Int? {
         if (itemCount == 0) return null
-        val distance = sqrt(dragX * dragX + dragY * dragY)
-        if (distance < deadZonePx) return null
+        val distanceSq = dragX * dragX + dragY * dragY
+        val deadZoneSq = deadZonePx * deadZonePx
+        if (distanceSq < deadZoneSq) return null
 
         val rawAngle = Math.toDegrees(atan2(dragY.toDouble(), dragX.toDouble())).toFloat()
         val dragAngle = normalizeAngle(rawAngle)
@@ -300,33 +301,33 @@ object RadialMenuMath {
      * @param pointerX Pointer X position in pixels (absolute screen coords).
      * @param pointerY Pointer Y position in pixels (absolute screen coords).
      * @param itemPositions List of item center positions from [edgeHugLayout].
-     * @param deadZonePx Minimum distance from any item to register a selection.
-     * @return Index of the nearest item, or null if within dead zone of the touch origin.
+     * @param deadZonePx Maximum distance from the nearest item center required
+     *   to register selection. Returns null if the pointer is farther than this threshold.
+     * @return Index of the nearest item, or null if no item is within [deadZonePx].
      * @since 1.0.3
      */
-    @Suppress("UnusedParameter")
     fun getNearestItemSelection(
         pointerX: Float,
         pointerY: Float,
         itemPositions: List<Offset>,
-        // Reserved: deadZonePx is part of the public API signature, removal would be a breaking change.
         deadZonePx: Float = RadialMenuDefaults.DEAD_ZONE_PX
     ): Int? {
         if (itemPositions.isEmpty()) return null
 
         var closestIndex = 0
-        var closestDist = Float.MAX_VALUE
+        var closestDistSq = Float.MAX_VALUE
 
         for (i in itemPositions.indices) {
             val dx = pointerX - itemPositions[i].x
             val dy = pointerY - itemPositions[i].y
-            val dist = sqrt(dx * dx + dy * dy)
-            if (dist < closestDist) {
-                closestDist = dist
+            val distSq = dx * dx + dy * dy
+            if (distSq < closestDistSq) {
+                closestDistSq = distSq
                 closestIndex = i
             }
         }
 
-        return closestIndex
+        val deadZoneSq = deadZonePx * deadZonePx
+        return if (closestDistSq <= deadZoneSq) closestIndex else null
     }
 }

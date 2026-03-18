@@ -5,18 +5,30 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -40,7 +52,6 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
-import kotlin.math.abs
 
 import io.github.gawwr4v.radialmenu.RadialMenuDefaults.CORNER_ITEM_THRESHOLD
 import io.github.gawwr4v.radialmenu.RadialMenuDefaults.DEAD_ZONE_PX
@@ -67,25 +78,207 @@ private data class RadialMenuState(
 )
 
 private val globalMenuState = mutableStateOf(RadialMenuState())
+private val globalMenuSpreadDegrees = mutableFloatStateOf(ICON_SPREAD_DEGREES)
+private val globalKeyboardPointerMoveHandler = mutableStateOf<((Offset) -> Unit)?>(null)
+
+private data class TapCallbacks(
+    val onTap: () -> Unit,
+    val onDoubleTap: () -> Unit
+)
+
+private data class TapStateCallbacks(
+    val getLastTapTime: () -> Long,
+    val setLastTapTime: (Long) -> Unit
+)
 
 /**
- * A wrapper composable that detects long presses and shows the radial menu overlay.
+ * Resolves a configured trigger mode into the effective platform trigger.
+ *
+ * [RadialMenuTriggerMode.Auto] maps to [defaultTriggerMode].
+ */
+internal fun resolveTriggerMode(triggerMode: RadialMenuTriggerMode): RadialMenuTriggerMode {
+    return if (triggerMode == RadialMenuTriggerMode.Auto) defaultTriggerMode else triggerMode
+}
+
+/**
+ * Resolves whether position-aware center-angle logic should be applied.
+ */
+internal fun resolvePositionAware(triggerMode: RadialMenuTriggerMode): Boolean {
+    return when (triggerMode) {
+        is RadialMenuTriggerMode.LongPress -> triggerMode.positionAware
+        is RadialMenuTriggerMode.SecondaryClick -> triggerMode.positionAware
+        is RadialMenuTriggerMode.KeyboardHold -> false
+        RadialMenuTriggerMode.Auto -> false
+    }
+}
+
+internal fun resolveCenterAngle(
+    isPositionAware: Boolean,
+    position: Offset,
+    containerWidth: Float,
+    containerHeight: Float,
+    isRtl: Boolean
+): Float {
+    return if (isPositionAware) {
+        RadialMenuMath.calculateCenterAngle(
+            position.x,
+            position.y,
+            containerWidth,
+            containerHeight,
+            isRtl
+        )
+    } else {
+        0f
+    }
+}
+
+internal expect val usePreviewKeyEventForKeyboardHold: Boolean
+
+internal fun keyboardHoldSpreadDegrees(itemCount: Int): Float {
+    return if (itemCount > 0) 360f / itemCount else 360f
+}
+
+internal fun centerSpawnedCenterAngle(itemCount: Int): Float {
+    val spread = keyboardHoldSpreadDegrees(itemCount)
+    return ((itemCount - 1) / 2f) * spread
+}
+
+internal fun keyboardHoldShouldOpenMenu(isKeyboardMenuOpen: Boolean): Boolean {
+    return !isKeyboardMenuOpen
+}
+
+internal fun keyboardHoldCommittedSelection(
+    isKeyboardMenuOpen: Boolean,
+    hoveredItemIndex: Int?
+): Int? {
+    return if (isKeyboardMenuOpen) hoveredItemIndex else null
+}
+
+internal fun keyboardHoldHoverSelectionFromPointer(
+    isCenterSpawned: Boolean,
+    pointer: Offset,
+    selectionOrigin: Offset,
+    centerAngle: Float,
+    itemCount: Int,
+    itemSpreadDegrees: Float,
+    itemPositions: List<Offset>,
+    centerDeadZonePx: Float,
+    nearestDeadZonePx: Float
+): Int? {
+    return if (isCenterSpawned) {
+        // Center-spawned keyboard menus are selected by flick direction
+        // from the cursor's key-down position, not from visual menu center.
+        val dragX = pointer.x - selectionOrigin.x
+        val dragY = pointer.y - selectionOrigin.y
+        val distanceSq = dragX * dragX + dragY * dragY
+        val deadZoneSq = centerDeadZonePx * centerDeadZonePx
+        if (distanceSq <= deadZoneSq) {
+            null
+        } else {
+            RadialMenuMath.getSelectionFromDrag(
+                dragX = dragX,
+                dragY = dragY,
+                centerAngle = centerAngle,
+                itemCount = itemCount,
+                spreadDegrees = itemSpreadDegrees,
+                deadZonePx = 0f,
+                selectionDeadZoneDeg = 180f
+            )
+        }
+    } else {
+        RadialMenuMath.getNearestItemSelection(
+            pointerX = pointer.x,
+            pointerY = pointer.y,
+            itemPositions = itemPositions,
+            deadZonePx = nearestDeadZonePx
+        )
+    }
+}
+
+private fun handleKeyboardHoldKeyEvent(
+    keyEvent: KeyEvent,
+    effectiveTrigger: RadialMenuTriggerMode,
+    isKeyboardMenuOpen: Boolean,
+    windowWidth: Float,
+    windowHeight: Float,
+    hoveredItemIndex: Int?,
+    hapticFeedback: HapticFeedback,
+    openMenuAtCenter: (Offset) -> Unit,
+    commitAndClose: (Int?) -> Unit
+): Boolean {
+    val keyboardMode = effectiveTrigger as? RadialMenuTriggerMode.KeyboardHold ?: return false
+    if (keyEvent.key != keyboardMode.key) return false
+
+    return when (keyEvent.type) {
+        KeyEventType.KeyDown -> {
+            if (keyboardHoldShouldOpenMenu(isKeyboardMenuOpen)) {
+                val spawnAtCenter = Offset(
+                    windowWidth.coerceAtLeast(1f) / 2f,
+                    windowHeight.coerceAtLeast(1f) / 2f
+                )
+                hapticFeedback.vibrate(50)
+                openMenuAtCenter(spawnAtCenter)
+            }
+            true
+        }
+
+        KeyEventType.KeyUp -> {
+            if (isKeyboardMenuOpen) {
+                commitAndClose(
+                    keyboardHoldCommittedSelection(
+                        isKeyboardMenuOpen = isKeyboardMenuOpen,
+                        hoveredItemIndex = hoveredItemIndex
+                    )
+                )
+            }
+            true
+        }
+
+        else -> false
+    }
+}
+
+/**
+ * Edge-hug activation gate shared by wrapper/view layers.
+ *
+ * Edge-hug is automatically skipped for center-spawned menus because corner
+ * clipping is geometrically irrelevant when the menu origin is screen center.
+ */
+internal fun shouldUseEdgeHugLayout(
+    enableEdgeHugLayout: Boolean,
+    isCenterSpawned: Boolean,
+    zone: MenuZone,
+    itemsCount: Int
+): Boolean {
+    return enableEdgeHugLayout &&
+        !isCenterSpawned &&
+        zone != MenuZone.CENTER &&
+        itemsCount > CORNER_ITEM_THRESHOLD
+}
+
+/**
+ * A wrapper composable that detects trigger gestures and shows the radial menu overlay.
  *
  * @param items The items to display. Supports 2-8 items (more is allowed but may degrade UX).
  * @param onItemSelected Callback fired when an item is selected from the radial menu.
  * @param enableEdgeHugLayout When true, items arrange in an L-shape along screen edges
  *   when long-pressed in a corner with 4+ items. Defaults to false (pure radial layout).
+ * @param triggerMode Controls how the radial menu is opened.
+ *   Defaults to [RadialMenuTriggerMode.Auto] (LongPress on Android, SecondaryClick on Desktop).
  * @param onTap Callback fired when the wrapped content is tapped.
  * @param onDoubleTap Callback fired when the wrapped content is double-tapped.
  * @param modifier Optional modifier for the wrapper box.
  * @param content The content to be wrapped and monitored for gestures.
  * @since 1.0.0
  */
+@Suppress("LongMethod")
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun RadialMenuWrapper(
     items: List<RadialMenuItem>,
     onItemSelected: (RadialMenuItem) -> Unit,
     enableEdgeHugLayout: Boolean = false,
+    triggerMode: RadialMenuTriggerMode = RadialMenuTriggerMode.Auto,
     onTap: () -> Unit = {},
     onDoubleTap: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -104,14 +297,220 @@ fun RadialMenuWrapper(
     var windowHeight by remember { mutableStateOf(0f) }
 
     val touchSlop = with(density) { 20.dp.toPx() }
+    val touchSlopSq = touchSlop * touchSlop
+    val dragSelectionThresholdSq = 30f * 30f
+    val edgeHugHitRadiusPx = with(density) { ICON_SIZE_DP.dp.toPx() * 0.75f }
+    val menuRadiusPx = with(density) { MENU_RADIUS_DP.dp.toPx() }
     val hapticFeedback = rememberHapticFeedback()
     val layoutDirection = LocalLayoutDirection.current
+    val effectiveTrigger = remember(triggerMode) { resolveTriggerMode(triggerMode) }
+    val resolvedPositionAware = remember(effectiveTrigger) { resolvePositionAware(effectiveTrigger) }
+    val focusRequester = remember { FocusRequester() }
 
-    fun calculateCenterAngle(x: Float, y: Float, screenWidth: Float, screenHeight: Float, isRtl: Boolean): Float =
-        RadialMenuMath.calculateCenterAngle(x, y, screenWidth, screenHeight, isRtl)
+    fun getSelectionFromDrag(
+        dragX: Float,
+        dragY: Float,
+        centerAngle: Float,
+        itemCount: Int,
+        spreadDegrees: Float
+    ): Int? = RadialMenuMath.getSelectionFromDrag(
+        dragX = dragX,
+        dragY = dragY,
+        centerAngle = centerAngle,
+        itemCount = itemCount,
+        spreadDegrees = spreadDegrees
+    )
 
-    fun getSelectionFromDrag(dragX: Float, dragY: Float, centerAngle: Float, itemCount: Int): Int? =
-        RadialMenuMath.getSelectionFromDrag(dragX, dragY, centerAngle, itemCount)
+    var isKeyboardMenuOpen by remember { mutableStateOf(false) }
+    var keyboardInitialState by remember { mutableStateOf<InitialMenuState?>(null) }
+    var keyboardSpawnPosition by remember { mutableStateOf(Offset.Zero) }
+    var keyboardSelectionOrigin by remember { mutableStateOf(Offset.Zero) }
+    var keyboardSelectionIndex by remember { mutableStateOf<Int?>(null) }
+    var lastKnownPointerAbsolute by remember { mutableStateOf<Offset?>(null) }
+
+    fun openMenu(
+        spawnAbsolute: Offset,
+        isCenterSpawned: Boolean,
+        isPositionAware: Boolean,
+        useFullCircleLayout: Boolean
+    ): InitialMenuState {
+        val containerW = containerSize.width.toFloat().coerceAtLeast(1f)
+        val containerH = containerSize.height.toFloat().coerceAtLeast(1f)
+        val winW = windowWidth.coerceAtLeast(1f)
+        val winH = windowHeight.coerceAtLeast(1f)
+        val isRtl = layoutDirection == LayoutDirection.Rtl
+
+        val initialState = computeInitialMenuState(
+            absolutePosition = spawnAbsolute,
+            winW = winW,
+            winH = winH,
+            containerW = containerW,
+            containerH = containerH,
+            isRtl = isRtl,
+            density = density,
+            itemsCount = items.size,
+            enableEdgeHugLayout = enableEdgeHugLayout,
+            isCenterSpawned = isCenterSpawned,
+            isPositionAware = isPositionAware,
+            useFullCircleLayout = useFullCircleLayout
+        )
+
+        globalMenuState.value = RadialMenuState(
+            isVisible = true,
+            touchPosition = spawnAbsolute,
+            dragOffset = Offset.Zero,
+            currentSelectionIndex = null,
+            centerAngle = initialState.centerAngle,
+            zone = initialState.zone,
+            edgeHugPositions = initialState.edgeHugPositions
+        )
+        globalMenuSpreadDegrees.floatValue = initialState.itemSpreadDegrees
+        return initialState
+    }
+
+    fun updateSelection(
+        initialState: InitialMenuState,
+        absolutePointer: Offset,
+        dragOffset: Offset
+    ): Int? {
+        val dragDistSq = dragOffset.x * dragOffset.x + dragOffset.y * dragOffset.y
+        if (dragDistSq <= dragSelectionThresholdSq) {
+            globalMenuState.value = globalMenuState.value.copy(
+                dragOffset = dragOffset,
+                currentSelectionIndex = null
+            )
+            return null
+        }
+
+        val newIndex = if (initialState.edgeHugPositions != null) {
+            RadialMenuMath.getNearestItemSelection(
+                pointerX = absolutePointer.x,
+                pointerY = absolutePointer.y,
+                itemPositions = initialState.edgeHugPositions,
+                deadZonePx = edgeHugHitRadiusPx
+            )
+        } else {
+            getSelectionFromDrag(
+                dragX = dragOffset.x,
+                dragY = dragOffset.y,
+                centerAngle = initialState.centerAngle,
+                itemCount = items.size,
+                spreadDegrees = initialState.itemSpreadDegrees
+            )
+        }
+
+        globalMenuState.value = globalMenuState.value.copy(
+            dragOffset = dragOffset,
+            currentSelectionIndex = newIndex
+        )
+        return newIndex
+    }
+
+    fun closeMenuAndCommit(selectionIndex: Int?) {
+        if (selectionIndex != null) {
+            hapticFeedback.vibrate(30)
+            onItemSelected(items[selectionIndex])
+        }
+        isKeyboardMenuOpen = false
+        keyboardInitialState = null
+        keyboardSelectionOrigin = Offset.Zero
+        keyboardSelectionIndex = null
+        globalMenuSpreadDegrees.floatValue = ICON_SPREAD_DEGREES
+        globalMenuState.value = RadialMenuState()
+    }
+
+    fun updateKeyboardHoverSelection(absolutePointer: Offset): Int? {
+        val initialState = keyboardInitialState ?: return null
+        val selectionOrigin = keyboardSelectionOrigin
+
+        val itemPositions = initialState.edgeHugPositions ?: List(items.size) { index ->
+            val itemAngle =
+                initialState.centerAngle + ((index - (items.size - 1) / 2f) * initialState.itemSpreadDegrees)
+            val angleRad = kotlin.math.PI / 180 * itemAngle
+            Offset(
+                keyboardSpawnPosition.x + (menuRadiusPx * cos(angleRad)).toFloat(),
+                keyboardSpawnPosition.y + (menuRadiusPx * sin(angleRad)).toFloat()
+            )
+        }
+
+        val newIndex = keyboardHoldHoverSelectionFromPointer(
+            isCenterSpawned = true,
+            pointer = absolutePointer,
+            selectionOrigin = selectionOrigin,
+            centerAngle = initialState.centerAngle,
+            itemCount = items.size,
+            itemSpreadDegrees = initialState.itemSpreadDegrees,
+            itemPositions = itemPositions,
+            centerDeadZonePx = DEAD_ZONE_PX,
+            nearestDeadZonePx = edgeHugHitRadiusPx
+        )
+
+        val dragOffset = absolutePointer - selectionOrigin
+        globalMenuState.value = globalMenuState.value.copy(
+            dragOffset = dragOffset,
+            currentSelectionIndex = newIndex
+        )
+        return newIndex
+    }
+
+    val handleKeyboardEvent: (KeyEvent) -> Boolean = { keyEvent ->
+        handleKeyboardHoldKeyEvent(
+            keyEvent = keyEvent,
+            effectiveTrigger = effectiveTrigger,
+            isKeyboardMenuOpen = isKeyboardMenuOpen,
+            windowWidth = windowWidth,
+            windowHeight = windowHeight,
+            hoveredItemIndex = keyboardSelectionIndex,
+            hapticFeedback = hapticFeedback,
+            openMenuAtCenter = { spawnAtCenter ->
+                isKeyboardMenuOpen = true
+                keyboardSpawnPosition = spawnAtCenter
+                keyboardSelectionOrigin = lastKnownPointerAbsolute ?: spawnAtCenter
+                keyboardInitialState = openMenu(
+                    spawnAbsolute = spawnAtCenter,
+                    isCenterSpawned = true,
+                    isPositionAware = false,
+                    useFullCircleLayout = true
+                )
+                keyboardSelectionIndex = null
+            },
+            commitAndClose = { selectionIndex -> closeMenuAndCommit(selectionIndex) }
+        )
+    }
+
+    val handleKeyboardPointerMove by rememberUpdatedState<(Offset) -> Unit> { absolutePointer ->
+        lastKnownPointerAbsolute = absolutePointer
+        val newIndex = updateKeyboardHoverSelection(absolutePointer)
+        if (newIndex != keyboardSelectionIndex) {
+            if (newIndex != null) {
+                hapticFeedback.vibrate(20)
+            }
+            keyboardSelectionIndex = newIndex
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+    LaunchedEffect(effectiveTrigger) {
+        if (effectiveTrigger is RadialMenuTriggerMode.KeyboardHold) {
+            focusRequester.requestFocus()
+        }
+    }
+    LaunchedEffect(effectiveTrigger, isKeyboardMenuOpen) {
+        globalKeyboardPointerMoveHandler.value = if (
+            effectiveTrigger is RadialMenuTriggerMode.KeyboardHold && isKeyboardMenuOpen
+        ) {
+            handleKeyboardPointerMove
+        } else {
+            null
+        }
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            globalKeyboardPointerMoveHandler.value = null
+        }
+    }
 
     Box(
         modifier = modifier
@@ -128,170 +527,238 @@ fun RadialMenuWrapper(
                 windowWidth = containerPosition.x + coords.size.width.toFloat()
                 windowHeight = containerPosition.y + coords.size.height.toFloat()
             }
-    ) {
-        Box(
-            modifier = Modifier
-                // Key on both items AND enableEdgeHugLayout so the gesture handler
-                // restarts when either changes. Without enableEdgeHugLayout in the key,
-                // the lambda captures a stale value and the toggle has no effect.
-                .pointerInput(items, enableEdgeHugLayout) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown(requireUnconsumed = false)
-                        val startPosition = down.position
-                        val pointerId = down.id
-                        val downTime = kotlin.time.TimeSource.Monotonic.markNow()
-
-                        // absolutePosition is in root coordinate space (matches Popup)
-                        val absolutePosition = containerPosition + startPosition
-
-                        // Container dimensions for radial layout (draws relative to touch)
-                        val containerW = containerSize.width.toFloat().coerceAtLeast(1f)
-                        val containerH = containerSize.height.toFloat().coerceAtLeast(1f)
-                        // Window dimensions for edge-hug (draws at absolute positions in Popup)
-                        val winW = windowWidth.coerceAtLeast(1f)
-                        val winH = windowHeight.coerceAtLeast(1f)
-                        val isRtl = layoutDirection == LayoutDirection.Rtl
-
-                        var isLongPress = false
-                        var moved = false
-                        var released = false
-
-                        while (!released && !isLongPress) {
-                            if (downTime.elapsedNow().inWholeMilliseconds >= LONG_PRESS_TIMEOUT_MS && !moved) {
-                                isLongPress = true
-                                break
-                            }
-
-                            try {
-                                val event = withTimeoutOrNull(50) {
-                                    awaitPointerEvent(PointerEventPass.Main)
-                                }
-
-                                if (event != null) {
-                                    val change = event.changes.find { it.id == pointerId }
-
-                                    if (change == null || !change.pressed) {
-                                        released = true
-                                        break
-                                    }
-
-                                    val dist = sqrt(
-                                        (change.position.x - startPosition.x).let { it * it } +
-                                        (change.position.y - startPosition.y).let { it * it }
-                                    )
-                                    if (dist > touchSlop) {
-                                        moved = true
-                                    }
-                                }
-                            } catch (_: Exception) {
-                            }
-                        }
-
-                        if (isLongPress) {
-                            // User has held down the finger long enough to trigger the radial menu.
-                            // Trigger a distinct vibration to notify them the menu is open.
-                            hapticFeedback.vibrate(50)
-
-                            val initialState = computeInitialMenuState(
-                                absolutePosition = absolutePosition,
-                                winW = winW,
-                                winH = winH,
-                                containerW = containerW,
-                                containerH = containerH,
-                                isRtl = isRtl,
-                                density = density,
-                                itemsCount = items.size,
-                                enableEdgeHugLayout = enableEdgeHugLayout
-                            )
-
-                            globalMenuState.value = RadialMenuState(
-                                isVisible = true,
-                                touchPosition = absolutePosition,
-                                dragOffset = Offset.Zero,
-                                currentSelectionIndex = null,
-                                centerAngle = initialState.centerAngle,
-                                zone = initialState.zone,
-                                edgeHugPositions = initialState.edgeHugPositions
-                            )
-
-                            var lastPosition = startPosition
-                            var currentDrag = Offset.Zero
-                            var currentSelectionIndex: Int? = null
-
-                            // We now enter a localized event loop to track the drag gesture.
-                            while (true) {
-                                // Wait for the next active pointer event in the main pass.
-                                val event = awaitPointerEvent(PointerEventPass.Main)
-                                val change = event.changes.find { it.id == pointerId }
-
-                                if (change == null) break
-
-                                val currentPos = change.position
-                                val delta = currentPos - lastPosition
-                                lastPosition = currentPos
-                                currentDrag += delta
-
-                                change.consume()
-
-                                // If the user lifts their finger, we commit the selection.
-                                if (!change.pressed) {
-                                    if (currentSelectionIndex != null) {
-                                        // Provide shorter haptic feedback to confirm selection completion.
-                                        hapticFeedback.vibrate(30)
-                                        onItemSelected(items[currentSelectionIndex])
-                                    }
-                                    break
-                                }
-
-                                // Calculate how far the user has dragged from the original press center.
-                                val dragDist = sqrt(currentDrag.x * currentDrag.x + currentDrag.y * currentDrag.y)
-
-                                // We only start selecting items if they drag past a minimum threshold
-                                // to avoid accidental selections when simply holding the menu open.
-                                if (dragDist > 30f) {
-                                    val newIndex = if (initialState.edgeHugPositions != null) {
-                                        // Edge-hug mode: select by nearest distance to absolute pointer
-                                        val absolutePointer = containerPosition + currentPos
-                                        RadialMenuMath.getNearestItemSelection(
-                                            absolutePointer.x, absolutePointer.y, initialState.edgeHugPositions
-                                        )
-                                    } else {
-                                        // Radial mode: existing angle-based selection (unchanged)
-                                        getSelectionFromDrag(currentDrag.x, currentDrag.y, initialState.centerAngle, items.size)
-                                    }
-
-                                    if (newIndex != currentSelectionIndex) {
-                                        if (newIndex != null) {
-                                            // Vibrate subtly as the user drags over different items.
-                                            hapticFeedback.vibrate(20)
-                                        }
-                                        currentSelectionIndex = newIndex
-                                    }
-
-                                    globalMenuState.value = globalMenuState.value.copy(
-                                        dragOffset = currentDrag,
-                                        currentSelectionIndex = currentSelectionIndex
-                                    )
-                                }
-                            }
-
-                            globalMenuState.value = RadialMenuState()
-
-                        } else if (!moved && released) {
-                            val timeSinceLastTap = System.currentTimeMillis() - lastTapTime
-
-                            if (timeSinceLastTap < DOUBLE_TAP_TIMEOUT_MS && timeSinceLastTap > 0) {
-                                onDoubleTap()
-                                lastTapTime = 0L
-                            } else {
-                                lastTapTime = System.currentTimeMillis()
-                                onTap()
-                            }
-                        }
+            .pointerInput(containerPosition) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Main)
+                        val pointer = event.changes.firstOrNull() ?: continue
+                        lastKnownPointerAbsolute = containerPosition + pointer.position
                     }
                 }
-        ) {
+            }
+            .focusRequester(focusRequester)
+            .focusable()
+            .onPreviewKeyEvent { keyEvent ->
+                if (usePreviewKeyEventForKeyboardHold) {
+                    handleKeyboardEvent(keyEvent)
+                } else {
+                    false
+                }
+            }
+            .onKeyEvent { keyEvent ->
+                if (!usePreviewKeyEventForKeyboardHold) {
+                    handleKeyboardEvent(keyEvent)
+                } else {
+                    false
+                }
+            }
+    ) {
+        val triggerModifier = Modifier
+            .applyLongPressTrigger(
+                items = items,
+                enableEdgeHugLayout = enableEdgeHugLayout,
+                effectiveTrigger = effectiveTrigger,
+                touchSlopSq = touchSlopSq,
+                tapCallbacks = TapCallbacks(onTap = onTap, onDoubleTap = onDoubleTap),
+                tapStateCallbacks = TapStateCallbacks(
+                    getLastTapTime = { lastTapTime },
+                    setLastTapTime = { lastTapTime = it }
+                ),
+                hapticFeedback = hapticFeedback,
+                containerPosition = containerPosition,
+                openMenuAt = { spawnAbsolute, isCenterSpawned ->
+                    openMenu(
+                        spawnAbsolute = spawnAbsolute,
+                        isCenterSpawned = isCenterSpawned,
+                        isPositionAware = resolvedPositionAware,
+                        useFullCircleLayout = false
+                    )
+                },
+                updateSelectionForPointer = { initialState, absolutePointer, dragOffset ->
+                    updateSelection(initialState, absolutePointer, dragOffset)
+                },
+                closeAndCommit = { selectionIndex -> closeMenuAndCommit(selectionIndex) }
+            )
+            .applySecondaryClickTrigger(
+                items = items,
+                enableEdgeHugLayout = enableEdgeHugLayout,
+                effectiveTrigger = effectiveTrigger,
+                hapticFeedback = hapticFeedback,
+                containerPosition = containerPosition,
+                openMenuAt = { spawnAbsolute, isCenterSpawned ->
+                    openMenu(
+                        spawnAbsolute = spawnAbsolute,
+                        isCenterSpawned = isCenterSpawned,
+                        isPositionAware = resolvedPositionAware,
+                        useFullCircleLayout = true
+                    )
+                },
+                updateSelectionForPointer = { initialState, absolutePointer, dragOffset ->
+                    updateSelection(initialState, absolutePointer, dragOffset)
+                },
+                closeAndCommit = { selectionIndex -> closeMenuAndCommit(selectionIndex) }
+            )
+
+        Box(modifier = triggerModifier) {
             content()
+        }
+    }
+}
+
+private fun Modifier.applyLongPressTrigger(
+    items: List<RadialMenuItem>,
+    enableEdgeHugLayout: Boolean,
+    effectiveTrigger: RadialMenuTriggerMode,
+    touchSlopSq: Float,
+    tapCallbacks: TapCallbacks,
+    tapStateCallbacks: TapStateCallbacks,
+    hapticFeedback: HapticFeedback,
+    containerPosition: Offset,
+    openMenuAt: (Offset, Boolean) -> InitialMenuState,
+    updateSelectionForPointer: (InitialMenuState, Offset, Offset) -> Int?,
+    closeAndCommit: (Int?) -> Unit
+): Modifier {
+    return pointerInput(items, enableEdgeHugLayout, effectiveTrigger) {
+        if (effectiveTrigger !is RadialMenuTriggerMode.LongPress) return@pointerInput
+
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false)
+            val startPosition = down.position
+            val pointerId = down.id
+            val downTime = kotlin.time.TimeSource.Monotonic.markNow()
+            val absolutePosition = containerPosition + startPosition
+
+            var isLongPress = false
+            var moved = false
+            var released = false
+
+            while (!released && !isLongPress) {
+                if (downTime.elapsedNow().inWholeMilliseconds >= LONG_PRESS_TIMEOUT_MS && !moved) {
+                    isLongPress = true
+                    break
+                }
+
+                try {
+                    val event = withTimeoutOrNull(50) {
+                        awaitPointerEvent(PointerEventPass.Main)
+                    }
+
+                    if (event != null) {
+                        val change = event.changes.find { it.id == pointerId }
+                        if (change == null || !change.pressed) {
+                            released = true
+                            break
+                        }
+
+                        val distSq =
+                            (change.position.x - startPosition.x).let { it * it } +
+                                (change.position.y - startPosition.y).let { it * it }
+                        if (distSq > touchSlopSq) {
+                            moved = true
+                        }
+                    }
+                } catch (_: Exception) {
+                }
+            }
+
+            if (isLongPress) {
+                hapticFeedback.vibrate(50)
+                val initialState = openMenuAt(absolutePosition, false)
+
+                var lastPosition = startPosition
+                var currentDrag = Offset.Zero
+                var currentSelectionIndex: Int? = null
+
+                while (true) {
+                    val event = awaitPointerEvent(PointerEventPass.Main)
+                    val change = event.changes.find { it.id == pointerId } ?: break
+
+                    val currentPos = change.position
+                    val delta = currentPos - lastPosition
+                    lastPosition = currentPos
+                    currentDrag += delta
+                    change.consume()
+
+                    if (!change.pressed) {
+                        break
+                    }
+
+                    val absolutePointer = containerPosition + currentPos
+                    val newIndex = updateSelectionForPointer(initialState, absolutePointer, currentDrag)
+
+                    if (newIndex != currentSelectionIndex) {
+                        if (newIndex != null) {
+                            hapticFeedback.vibrate(20)
+                        }
+                        currentSelectionIndex = newIndex
+                    }
+                }
+
+                closeAndCommit(currentSelectionIndex)
+            } else if (!moved && released) {
+                val timeSinceLastTap = System.currentTimeMillis() - tapStateCallbacks.getLastTapTime()
+                if (timeSinceLastTap < DOUBLE_TAP_TIMEOUT_MS && timeSinceLastTap > 0) {
+                    tapCallbacks.onDoubleTap()
+                    tapStateCallbacks.setLastTapTime(0L)
+                } else {
+                    tapStateCallbacks.setLastTapTime(System.currentTimeMillis())
+                    tapCallbacks.onTap()
+                }
+            }
+        }
+    }
+}
+
+private fun Modifier.applySecondaryClickTrigger(
+    items: List<RadialMenuItem>,
+    enableEdgeHugLayout: Boolean,
+    effectiveTrigger: RadialMenuTriggerMode,
+    hapticFeedback: HapticFeedback,
+    containerPosition: Offset,
+    openMenuAt: (Offset, Boolean) -> InitialMenuState,
+    updateSelectionForPointer: (InitialMenuState, Offset, Offset) -> Int?,
+    closeAndCommit: (Int?) -> Unit
+): Modifier {
+    return pointerInput(items, enableEdgeHugLayout, effectiveTrigger) {
+        if (effectiveTrigger !is RadialMenuTriggerMode.SecondaryClick) return@pointerInput
+
+        awaitEachGesture {
+            var initialState: InitialMenuState? = null
+            var spawnAbsolute = Offset.Zero
+            var currentSelectionIndex: Int? = null
+
+            while (true) {
+                val event = awaitPointerEvent(PointerEventPass.Main)
+                val pointer = event.changes.firstOrNull() ?: continue
+                val absolutePointer = containerPosition + pointer.position
+
+                if (initialState == null) {
+                    if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
+                        hapticFeedback.vibrate(50)
+                        spawnAbsolute = absolutePointer
+                        initialState = openMenuAt(spawnAbsolute, false)
+                        pointer.consume()
+                    } else if (event.type == PointerEventType.Release) {
+                        break
+                    }
+                    continue
+                }
+
+                val dragOffset = absolutePointer - spawnAbsolute
+                val newIndex = updateSelectionForPointer(initialState, absolutePointer, dragOffset)
+
+                if (newIndex != currentSelectionIndex) {
+                    if (newIndex != null) {
+                        hapticFeedback.vibrate(20)
+                    }
+                    currentSelectionIndex = newIndex
+                }
+
+                if (event.type == PointerEventType.Release || !event.buttons.isSecondaryPressed) {
+                    closeAndCommit(currentSelectionIndex)
+                    break
+                }
+            }
         }
     }
 }
@@ -299,9 +766,11 @@ fun RadialMenuWrapper(
 private data class InitialMenuState(
     val zone: MenuZone,
     val centerAngle: Float,
+    val itemSpreadDegrees: Float,
     val edgeHugPositions: List<Offset>?
 )
 
+@Suppress("LongParameterList")
 private fun computeInitialMenuState(
     absolutePosition: Offset,
     winW: Float,
@@ -311,7 +780,10 @@ private fun computeInitialMenuState(
     isRtl: Boolean,
     density: androidx.compose.ui.unit.Density,
     itemsCount: Int,
-    enableEdgeHugLayout: Boolean
+    enableEdgeHugLayout: Boolean,
+    isCenterSpawned: Boolean,
+    isPositionAware: Boolean,
+    useFullCircleLayout: Boolean
 ): InitialMenuState {
     val edgeThreshPx = with(density) { EDGE_THRESH_DP.dp.toPx() }
     val zone = RadialMenuMath.detectZone(
@@ -319,8 +791,14 @@ private fun computeInitialMenuState(
         winW, winH, edgeThreshPx
     )
 
-    val useEdgeHug = enableEdgeHugLayout &&
-        zone != MenuZone.CENTER && itemsCount > CORNER_ITEM_THRESHOLD
+    // Center-spawned menus (KeyboardHold) are never corner-constrained,
+    // so edge-hug is intentionally bypassed even when enableEdgeHugLayout is true.
+    val useEdgeHug = shouldUseEdgeHugLayout(
+        enableEdgeHugLayout = enableEdgeHugLayout,
+        isCenterSpawned = isCenterSpawned,
+        zone = zone,
+        itemsCount = itemsCount
+    )
 
     return if (useEdgeHug) {
         val itemSizePx = with(density) { ICON_SIZE_DP.dp.toPx() }
@@ -329,18 +807,43 @@ private fun computeInitialMenuState(
         InitialMenuState(
             zone = zone,
             centerAngle = 0f,
+            itemSpreadDegrees = ICON_SPREAD_DEGREES,
             edgeHugPositions = RadialMenuMath.edgeHugLayout(
                 zone, winW, winH,
                 itemsCount, itemSizePx * 1.5f, gapPx, padPx
             )
         )
     } else {
+        val spreadDegrees = if (useFullCircleLayout) {
+            keyboardHoldSpreadDegrees(itemsCount)
+        } else {
+            ICON_SPREAD_DEGREES
+        }
+        val centerAngle = if (useFullCircleLayout) {
+            if (!isCenterSpawned && isPositionAware) {
+                resolveCenterAngle(
+                    isPositionAware = true,
+                    position = absolutePosition,
+                    containerWidth = containerW,
+                    containerHeight = containerH,
+                    isRtl = isRtl
+                )
+            } else {
+                centerSpawnedCenterAngle(itemsCount)
+            }
+        } else {
+            resolveCenterAngle(
+                isPositionAware = isPositionAware,
+                position = absolutePosition,
+                containerWidth = containerW,
+                containerHeight = containerH,
+                isRtl = isRtl
+            )
+        }
         InitialMenuState(
             zone = zone,
-            centerAngle = RadialMenuMath.calculateCenterAngle(
-                absolutePosition.x, absolutePosition.y,
-                containerW, containerH, isRtl
-            ),
+            centerAngle = centerAngle,
+            itemSpreadDegrees = spreadDegrees,
             edgeHugPositions = null
         )
     }
@@ -364,6 +867,7 @@ fun RadialMenuOverlay(
     animationConfig: RadialMenuAnimationConfig = RadialMenuAnimationConfig.default()
 ) {
     val menuState by globalMenuState
+    val keyboardPointerMoveHandler = globalKeyboardPointerMoveHandler.value
 
     if (menuState.isVisible) {
         Popup(
@@ -373,6 +877,17 @@ fun RadialMenuOverlay(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(colors.overlayColor)
+                    .pointerInput(keyboardPointerMoveHandler) {
+                        val pointerHandler = keyboardPointerMoveHandler ?: return@pointerInput
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent(PointerEventPass.Main)
+                                if (event.type != PointerEventType.Move) continue
+                                val pointer = event.changes.firstOrNull() ?: continue
+                                pointerHandler(pointer.position)
+                            }
+                        }
+                    }
             ) {
                 RadialMenuCanvas(
                     center = menuState.touchPosition,
@@ -464,7 +979,7 @@ fun RadialMenuCanvas(
             val iconCenter = if (edgeHugPositions != null && i < edgeHugPositions.size) {
                 edgeHugPositions[i]
             } else {
-                val itemAngle = centerAngle + ((i - (itemCount - 1) / 2f) * ICON_SPREAD_DEGREES)
+                val itemAngle = centerAngle + ((i - (itemCount - 1) / 2f) * globalMenuSpreadDegrees.floatValue)
                 val angleRad = kotlin.math.PI / 180 * itemAngle
                 Offset(
                     center.x + (menuRadius * cos(angleRad)).toFloat(),

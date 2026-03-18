@@ -1,6 +1,6 @@
 ---
-title: RadialMenu - Lightweight Radial Menu for Android
-description: RadialMenu is a lightweight Android library for radial menus, circular menus, and pie menus. Built for Jetpack Compose and Android Views. Gesture-driven, open source, and Kotlin-first.
+title: RadialMenu - Radial Context Menu for Android and Desktop
+description: RadialMenu is a Kotlin Multiplatform radial, circular, and pie menu library for Compose Multiplatform and Android Views.
 hide:
   - toc
 ---
@@ -8,61 +8,50 @@ hide:
 <div class="homepage-hero">
   <img src="assets/radialMenuLogo.png" alt="RadialMenu logo" width="80" height="80">
   <h1>RadialMenu</h1>
-  <p class="tagline">A lightweight, fully customizable radial menu for Android</p>
+  <p class="tagline">Radial context menu for Compose Multiplatform and Android Views</p>
 </div>
 
-<p class="seo-synonyms">
-  RadialMenu is also known as a circular menu, pie menu, arc menu, or wheel menu -
-  all referring to the same gesture-driven radial interaction pattern popular in
-  modern Android UI design. If you searched for any of those terms, you are in the right place.
-</p>
-
-```kotlin title="build.gradle.kts"
+```kotlin title="Dependency"
 implementation("io.github.gawwr4v:radialmenu:1.0.4")
 ```
 
-<div align="center" style="margin: 4rem 0; display: flex; justify-content: center; gap: 4rem; flex-wrap: wrap;">
+<div align="center" style="margin: 3rem 0; display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap;">
   <div style="text-align: center;">
-    <img src="assets/demo1.gif" alt="RadialMenu on Android" width="380" style="border-radius: 12px; border: 1px solid var(--md-border-color); margin-bottom: 0.5rem;">
-    <div style="font-size: 0.9rem; color: var(--md-default-fg-color--light);">Android App</div>
+    <img src="assets/demo1.gif" alt="RadialMenu on Android" width="380" style="border-radius: 8px; border: 1px solid var(--md-border-color); margin-bottom: 0.5rem;">
+    <div style="font-size: 0.9rem; color: var(--md-default-fg-color--light);">Android</div>
   </div>
   <div style="text-align: center;">
-    <img src="assets/demo2.gif" alt="RadialMenu on Desktop (Compose Multiplatform)" width="380" style="border-radius: 12px; border: 1px solid var(--md-border-color); margin-bottom: 0.5rem;">
-    <div style="font-size: 0.9rem; color: var(--md-default-fg-color--light);">Desktop (Compose)</div>
+    <img src="assets/demo2.gif" alt="RadialMenu on Desktop" width="380" style="border-radius: 8px; border: 1px solid var(--md-border-color); margin-bottom: 0.5rem;">
+    <div style="font-size: 0.9rem; color: var(--md-default-fg-color--light);">Desktop JVM</div>
   </div>
 </div>
 
-## Why RadialMenu?
+## What You Get
 
-Traditional Android context menus (like `PopupMenu` or `ContextMenu`) force users to read vertical lists, breaking their flow. Radial menus leverage **muscle memory**. Because items are arranged in a circle, the distance and direction to each item are consistent. Once a user learns where "Copy" or "Delete" is, they can trigger it with a single, rapid flick of the thumb without even looking.
+- Compose wrapper + fullscreen overlay API
+- Android View API (`RadialMenuView`)
+- Trigger modes: `Auto`, `LongPress`, `SecondaryClick`, `KeyboardHold`
+- Edge-hug corner layout (opt-in)
+- Badge support, active/inactive item icons, and animated hover scaling
 
-**RadialMenu** was built to bring this premium interaction paradigm to Android with zero friction.
+## Trigger Model
 
-<div class="features-grid">
-  <div class="feature-card">
-    <div class="feature-icon"></div>
-    <h3>Fully Customizable</h3>
-    <p>Style every aspect from colors to animations to match your app's exact design system.</p>
-  </div>
-  <div class="feature-card">
-    <div class="feature-icon"></div>
-    <h3>Lightweight</h3>
-    <p>Minimal dependencies and optimized drawing for maximum performance and fluid 60fps animations.</p>
-  </div>
-  <div class="feature-card">
-    <div class="feature-icon"></div>
-    <h3>Gesture-Driven</h3>
-    <p>Intuitive interaction model: long-press to open, drag towards an item, release to select.</p>
-  </div>
-  <div class="feature-card">
-    <div class="feature-icon"></div>
-    <h3>Jetpack Compose Ready</h3>
-    <p>Built from the ground up for modern Android development with full Compose support.</p>
-  </div>
-</div>
+- `Auto` picks platform defaults:
+  - Android: `LongPress(positionAware = true)`
+  - Desktop: `SecondaryClick(positionAware = false)`
+- `KeyboardHold(key)` opens at screen center and commits selection on key release.
+- Keyboard hold selection uses angle-based pie slices and tracks flick direction from cursor position at key-down.
 
-<div class="seo-keywords" aria-hidden="true">
-  radial menu android, circular menu android, pie menu android, arc menu android,
-  wheel menu kotlin, jetpack compose radial menu, android gesture menu,
-  kotlin multiplatform menu, compose custom menu, android open source menu library
-</div>
+## Behavior Notes
+
+- Edge-hug layout is opt-in through `enableEdgeHugLayout = true`.
+- Edge-hug applies only to cursor/touch-spawned menus in corners with 4+ items.
+- Edge-hug is skipped for center-spawned keyboard menus.
+- Published POM declares only `kotlin-stdlib`; Compose and AndroidX are provided by the consuming app.
+
+## Next
+
+- [Getting Started](getting-started.md)
+- [Customization](customization.md)
+- [Radial vs Circular vs Pie](alternatives.md)
+- [Changelog](changelog.md)
