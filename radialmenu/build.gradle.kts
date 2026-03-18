@@ -238,11 +238,3 @@ fun MavenPublication.configurePom() {
     }
 }
 
-nmcp {
-    centralPortal {
-        username = (project.findProperty("ossrhUsername") as? String) ?: ""
-        password = (project.findProperty("ossrhPassword") as? String) ?: ""
-        publishingType = "USER_MANAGED"
-        verificationTimeout = Duration.ofMinutes(20)
-    }
-}
