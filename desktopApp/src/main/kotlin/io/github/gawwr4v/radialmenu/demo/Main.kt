@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -20,15 +21,16 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -38,8 +40,15 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import io.github.gawwr4v.radialmenu.RadialMenuItem
 import io.github.gawwr4v.radialmenu.RadialMenuOverlay
+import io.github.gawwr4v.radialmenu.RadialMenuTriggerMode
 import io.github.gawwr4v.radialmenu.RadialMenuWrapper
 import kotlin.math.roundToInt
+
+private enum class DesktopTriggerOption {
+    SecondaryClick,
+    KeyboardHold,
+    LongPress
+}
 
 /** A simple solid-color circle painter used as a placeholder icon. */
 private class CirclePainter(private val color: Color) : Painter() {
@@ -73,11 +82,29 @@ fun main() = application {
         title = "RadialMenu Desktop Demo",
         state = rememberWindowState(width = 480.dp, height = 640.dp)
     ) {
-        var statusText by remember { mutableStateOf("Long-press anywhere to open the menu") }
+        var statusText by remember { mutableStateOf("No selection yet") }
         var itemCount by remember { mutableIntStateOf(4) }
         var edgeHugEnabled by remember { mutableStateOf(false) }
+        var triggerOption by remember { mutableStateOf(DesktopTriggerOption.SecondaryClick) }
+        var secondaryPositionAware by remember { mutableStateOf(false) }
+        var longPressPositionAware by remember { mutableStateOf(true) }
 
         val items = remember(itemCount) { createItems(itemCount) }
+        val triggerMode = when (triggerOption) {
+            DesktopTriggerOption.SecondaryClick -> RadialMenuTriggerMode.SecondaryClick(
+                positionAware = secondaryPositionAware
+            )
+            DesktopTriggerOption.KeyboardHold -> RadialMenuTriggerMode.KeyboardHold(Key.Q)
+            DesktopTriggerOption.LongPress -> RadialMenuTriggerMode.LongPress(
+                positionAware = longPressPositionAware
+            )
+        }
+        val isCenterSpawned = triggerMode is RadialMenuTriggerMode.KeyboardHold
+        val triggerHint = when (triggerOption) {
+            DesktopTriggerOption.SecondaryClick -> "Right-click anywhere to open"
+            DesktopTriggerOption.KeyboardHold -> "Hold Q to open menu"
+            DesktopTriggerOption.LongPress -> "Long press anywhere to open menu"
+        }
 
         // Draggable panel offset (default: bottom-center, set after first layout)
         var panelOffset by remember { mutableStateOf(Offset.Zero) }
@@ -108,7 +135,8 @@ fun main() = application {
                         onItemSelected = { item ->
                             statusText = "Selected: ${item.label}"
                         },
-                        enableEdgeHugLayout = edgeHugEnabled,
+                        enableEdgeHugLayout = edgeHugEnabled && !isCenterSpawned,
+                        triggerMode = triggerMode,
                         onTap = {
                             statusText = "Tapped"
                         },
@@ -122,7 +150,7 @@ fun main() = application {
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = statusText,
+                                text = "$triggerHint\n$statusText",
                                 fontSize = 18.sp,
                                 color = Color.White
                             )
@@ -185,13 +213,88 @@ fun main() = application {
                                 modifier = Modifier.width(120.dp).padding(horizontal = 8.dp)
                             )
                             Checkbox(
-                                checked = edgeHugEnabled,
-                                onCheckedChange = { edgeHugEnabled = it }
+                                checked = edgeHugEnabled && !isCenterSpawned,
+                                onCheckedChange = if (isCenterSpawned) null else { value -> edgeHugEnabled = value },
+                                enabled = !isCenterSpawned
                             )
                             Text(
                                 text = "Edge-Hug",
                                 fontSize = 13.sp,
-                                color = Color.White
+                                color = Color.White,
+                                modifier = Modifier.alpha(if (isCenterSpawned) 0.5f else 1f)
+                            )
+                        }
+
+                        Text(
+                            text = "Trigger mode",
+                            fontSize = 12.sp,
+                            color = Color.White.copy(alpha = 0.9f),
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(top = 4.dp)
+                        ) {
+                            RadioButton(
+                                selected = triggerOption == DesktopTriggerOption.SecondaryClick,
+                                onClick = { triggerOption = DesktopTriggerOption.SecondaryClick }
+                            )
+                            Text("SecondaryClick", color = Color.White, fontSize = 12.sp)
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            RadioButton(
+                                selected = triggerOption == DesktopTriggerOption.KeyboardHold,
+                                onClick = { triggerOption = DesktopTriggerOption.KeyboardHold }
+                            )
+                            Text("KeyboardHold (Q)", color = Color.White, fontSize = 12.sp)
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            RadioButton(
+                                selected = triggerOption == DesktopTriggerOption.LongPress,
+                                onClick = { triggerOption = DesktopTriggerOption.LongPress }
+                            )
+                            Text("LongPress", color = Color.White, fontSize = 12.sp)
+                        }
+
+                        if (triggerOption != DesktopTriggerOption.KeyboardHold) {
+                            val positionAwareChecked = when (triggerOption) {
+                                DesktopTriggerOption.SecondaryClick -> secondaryPositionAware
+                                DesktopTriggerOption.LongPress -> longPressPositionAware
+                                DesktopTriggerOption.KeyboardHold -> false
+                            }
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(top = 4.dp)
+                            ) {
+                                Checkbox(
+                                    checked = positionAwareChecked,
+                                    onCheckedChange = { value ->
+                                        when (triggerOption) {
+                                            DesktopTriggerOption.SecondaryClick -> secondaryPositionAware = value
+                                            DesktopTriggerOption.LongPress -> longPressPositionAware = value
+                                            DesktopTriggerOption.KeyboardHold -> Unit
+                                        }
+                                    }
+                                )
+                                Text("Position aware", color = Color.White, fontSize = 12.sp)
+                            }
+                        }
+
+                        Text(
+                            text = triggerHint,
+                            fontSize = 11.sp,
+                            color = Color.White.copy(alpha = 0.85f),
+                            modifier = Modifier.padding(top = 6.dp)
+                        )
+                        if (isCenterSpawned) {
+                            Text(
+                                text = "Not applicable for center-spawned menus",
+                                fontSize = 11.sp,
+                                color = Color.White.copy(alpha = 0.6f),
+                                modifier = Modifier.padding(top = 2.dp)
                             )
                         }
                     }
