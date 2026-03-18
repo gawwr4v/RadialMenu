@@ -18,7 +18,6 @@ nmcpAggregation {
         username = (project.findProperty("ossrhUsername") as? String) ?: ""
         password = (project.findProperty("ossrhPassword") as? String) ?: ""
         publishingType = "USER_MANAGED"
-        publishingTimeout = java.time.Duration.ofMinutes(15)
         validationTimeout = java.time.Duration.ofMinutes(10)
     }
 }
