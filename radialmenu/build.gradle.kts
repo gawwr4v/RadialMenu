@@ -2,7 +2,6 @@ import java.net.URL
 import org.gradle.plugins.signing.Sign
 import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
 import org.gradle.api.publish.maven.tasks.PublishToMavenLocal
-import java.time.Duration
 
 plugins {
     kotlin("multiplatform")
@@ -18,7 +17,6 @@ plugins {
 }
 
 kotlin {
-    androidTarget()
     androidTarget {
         compilations.all {
             compileTaskProvider.configure {
@@ -30,7 +28,15 @@ kotlin {
         publishLibraryVariants("release")
     }
 
-    jvm("desktop")
+    jvm("desktop") {
+        compilations.all {
+            compileTaskProvider.configure {
+                compilerOptions {
+                    jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+                }
+            }
+        }
+    }
 
     sourceSets {
         commonMain.dependencies {
@@ -193,7 +199,13 @@ afterEvaluate {
         publications.withType<MavenPublication> {
             groupId = (project.findProperty("GROUP_ID") as? String) ?: "io.github.gawwr4v"
             version = (project.findProperty("VERSION_NAME") as? String) ?: "1.0.0"
-            artifactId = (project.findProperty("ARTIFACT_ID") as? String) ?: "radialmenu"
+            val baseArtifactId = (project.findProperty("ARTIFACT_ID") as? String) ?: "radialmenu"
+            artifactId = when (name) {
+                "kotlinMultiplatform" -> baseArtifactId
+                "androidRelease" -> "${baseArtifactId}-android"
+                "desktop" -> "${baseArtifactId}-desktop"
+                else -> baseArtifactId
+            }
             artifact(javadocJar)
             configurePom()
         }

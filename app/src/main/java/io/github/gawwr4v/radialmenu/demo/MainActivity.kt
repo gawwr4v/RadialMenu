@@ -9,7 +9,6 @@ import android.widget.TextView
 import android.widget.Toast
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.SwitchCompat
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,7 +24,6 @@ import io.github.gawwr4v.radialmenu.RadialMenuItem
 import io.github.gawwr4v.radialmenu.RadialMenuOverlay
 import io.github.gawwr4v.radialmenu.RadialMenuView
 import io.github.gawwr4v.radialmenu.RadialMenuWrapper
-import io.github.gawwr4v.radialmenu.toPainter
 
 class MainActivity : AppCompatActivity() {
 
@@ -118,8 +116,12 @@ class MainActivity : AppCompatActivity() {
             android.R.drawable.ic_menu_preferences
         )
         return (0 until count.coerceIn(2, 8)).map { i ->
-            val drawable = AppCompatResources.getDrawable(this, iconResources[i])!!
-            RadialMenuItem(id = i + 1, icon = drawable.toPainter(), label = "Action ${i + 1}")
+            RadialMenuItem(
+                context = this,
+                id = i + 1,
+                iconRes = iconResources[i],
+                label = "Action ${i + 1}"
+            )
         }
     }
 

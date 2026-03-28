@@ -133,6 +133,25 @@ val items = listOf(
 )
 ```
 
+Android overloads for View-friendly icon setup:
+
+```kotlin
+// Drawable resource overload
+RadialMenuItem(
+    context = this,
+    id = 3,
+    iconRes = R.drawable.ic_share,
+    label = "Share"
+)
+
+// Drawable overload
+RadialMenuItem(
+    id = 4,
+    icon = drawable,
+    label = "Bookmark"
+)
+```
+
 ## Android View XML Attributes
 
 | XML Attribute | Format | Default | Description |

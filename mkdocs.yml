@@ -1,15 +1,20 @@
 site_name: RadialMenu
 site_description: RadialMenu is a Kotlin Multiplatform radial, circular, and pie menu library for Compose Multiplatform and Android Views.
-site_url: https://gawwr4v.github.io/RadialMenu
+site_url: https://gawwr4v.github.io/RadialMenu/
 repo_url: https://github.com/gawwr4v/RadialMenu
-repo_name: RadialMenu
+repo_name: gawwr4v/RadialMenu
 
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
+  - Compatibility: compatibility.md
+  - Troubleshooting: troubleshooting.md
   - Customization: customization.md
   - Radial vs Circular vs Pie: alternatives.md
   - Changelog: changelog.md
+
+not_in_nav: |
+  /404.md
 
 theme:
   name: material

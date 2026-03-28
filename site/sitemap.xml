@@ -2,22 +2,34 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://gawwr4v.github.io/RadialMenu/</loc>
-         <lastmod>2026-03-18</lastmod>
+         <lastmod>2026-03-28</lastmod>
+    </url>
+    <url>
+         <loc>https://gawwr4v.github.io/RadialMenu/404/</loc>
+         <lastmod>2026-03-28</lastmod>
     </url>
     <url>
          <loc>https://gawwr4v.github.io/RadialMenu/alternatives/</loc>
-         <lastmod>2026-03-18</lastmod>
+         <lastmod>2026-03-28</lastmod>
     </url>
     <url>
          <loc>https://gawwr4v.github.io/RadialMenu/changelog/</loc>
-         <lastmod>2026-03-18</lastmod>
+         <lastmod>2026-03-28</lastmod>
+    </url>
+    <url>
+         <loc>https://gawwr4v.github.io/RadialMenu/compatibility/</loc>
+         <lastmod>2026-03-28</lastmod>
     </url>
     <url>
          <loc>https://gawwr4v.github.io/RadialMenu/customization/</loc>
-         <lastmod>2026-03-18</lastmod>
+         <lastmod>2026-03-28</lastmod>
     </url>
     <url>
          <loc>https://gawwr4v.github.io/RadialMenu/getting-started/</loc>
-         <lastmod>2026-03-18</lastmod>
+         <lastmod>2026-03-28</lastmod>
+    </url>
+    <url>
+         <loc>https://gawwr4v.github.io/RadialMenu/troubleshooting/</loc>
+         <lastmod>2026-03-28</lastmod>
     </url>
 </urlset>

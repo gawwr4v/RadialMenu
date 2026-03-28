@@ -12,7 +12,7 @@ hide:
 </div>
 
 ```kotlin title="Dependency"
-implementation("io.github.gawwr4v:radialmenu:1.0.4")
+implementation("io.github.gawwr4v:radialmenu:1.0.5")
 ```
 
 <div align="center" style="margin: 3rem 0; display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap;">

@@ -6,6 +6,22 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-03-24
+
+### Bug Fixes
+- Fixed Gradle variant resolution metadata so Android target mapping resolves correctly from `io.github.gawwr4v:radialmenu`.
+- Fixed desktop artifact bytecode target to Java 17 (`major version: 61`).
+
+### New Features
+- Added Android `RadialMenuItem` overloads for:
+  - `@DrawableRes` icons
+  - `Drawable` icons
+- Existing `Painter`-based API remains unchanged.
+
+### Documentation
+- Added platform setup snippets for Android View, Android Compose, and Desktop.
+- Added troubleshooting guidance and compatibility matrix pages.
+
 ## [1.0.4] - 2026-03-13
 
 ### New Features

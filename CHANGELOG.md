@@ -5,6 +5,37 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-03-24
+### Bug Fixes
+- Fixed Gradle variant resolution for KMP metadata publishing.
+  - Root `radialmenu` metadata now correctly maps to `radialmenu-android` and `radialmenu-desktop` target modules.
+  - Android consumers can resolve the Android artifact without forcing `@aar` in normal Gradle metadata flows.
+- Fixed desktop JVM bytecode target.
+  - Desktop artifact now compiles to Java 17 bytecode (`major version: 61`) instead of Java 21.
+
+### New Features
+- Added Android-friendly `RadialMenuItem` overloads:
+  - `RadialMenuItem(context, id, @DrawableRes iconRes, ...)`
+  - `RadialMenuItem(id, Drawable icon, ...)`
+- Existing `RadialMenuItem(id, Painter icon, ...)` API remains unchanged.
+
+### Documentation
+- Added complete platform setup snippets for:
+  - Android View
+  - Android Compose (Kotlin 2.x)
+  - Desktop Compose
+- Added troubleshooting coverage for:
+  - artifact/variant resolution
+  - Java runtime mismatch
+  - Painter/Compose type friction in View-only usage
+- Added compatibility matrix and dedicated docs pages:
+  - `docs/compatibility.md`
+  - `docs/troubleshooting.md`
+
+### No Breaking Changes
+- Existing public API remains backward compatible.
+- Trigger-mode and edge-hug behavior from `1.0.4` is unchanged.
+
 ## [1.0.4] - 2026-03-13
 ### New Features
 - Added `RadialMenuTriggerMode` with four modes:

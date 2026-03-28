@@ -126,6 +126,13 @@ public final class io/github/gawwr4v/radialmenu/RadialMenuItem {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/gawwr4v/radialmenu/RadialMenuItemAndroidKt {
+	public static final fun RadialMenuItem (ILandroid/graphics/drawable/Drawable;Ljava/lang/String;Landroid/graphics/drawable/Drawable;ZILjava/lang/String;Ljava/lang/String;)Lio/github/gawwr4v/radialmenu/RadialMenuItem;
+	public static final fun RadialMenuItem (Landroid/content/Context;IILjava/lang/String;Ljava/lang/Integer;ZILjava/lang/String;Ljava/lang/String;)Lio/github/gawwr4v/radialmenu/RadialMenuItem;
+	public static synthetic fun RadialMenuItem$default (ILandroid/graphics/drawable/Drawable;Ljava/lang/String;Landroid/graphics/drawable/Drawable;ZILjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/gawwr4v/radialmenu/RadialMenuItem;
+	public static synthetic fun RadialMenuItem$default (Landroid/content/Context;IILjava/lang/String;Ljava/lang/Integer;ZILjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/gawwr4v/radialmenu/RadialMenuItem;
+}
+
 public final class io/github/gawwr4v/radialmenu/RadialMenuMath {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/gawwr4v/radialmenu/RadialMenuMath;
