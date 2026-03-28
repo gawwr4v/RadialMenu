@@ -1,168 +1,173 @@
 ---
 title: Getting Started - RadialMenu
-description: Install and integrate RadialMenu in Compose Multiplatform or Android Views.
+description: Install and configure RadialMenu for Android View, Android Compose, and Desktop.
 ---
 
 # Getting Started
 
-RadialMenu supports:
-- Compose Multiplatform (Android + Desktop JVM)
-- Android View system (`RadialMenuView`)
+## Compatibility Matrix
 
-## Requirements
-
-- Min SDK: 21 (Android)
-- Kotlin: 2.1.20+ recommended
-- Compose dependencies in your app/module if you use Compose API
+| Platform | Min runtime | Kotlin | Compose | AGP |
+|---|---|---|---|---|
+| Android | API 21 | 2.x | 1.7+ (optional for View-only setups) | 8.5+ |
+| Desktop JVM | Java 17 | 2.x | Compose Desktop | N/A |
 
 ## Installation
 
-=== "Kotlin DSL (build.gradle.kts)"
-
-    ```kotlin
-    dependencies {
-        implementation("io.github.gawwr4v:radialmenu:1.0.4")
-    }
-    ```
-
-=== "Groovy DSL (build.gradle)"
-
-    ```groovy
-    dependencies {
-        implementation 'io.github.gawwr4v:radialmenu:1.0.4'
-    }
-    ```
-
-## Compose Dependency Setup (Required)
-
-RadialMenu does not export Compose transitively. If you use the Compose API, add Compose dependencies in your own module.
-
-Example (KMP source-set style):
-
 ```kotlin
-kotlin {
-    sourceSets {
-        commonMain.dependencies {
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.ui)
-        }
-        desktopMain.dependencies {
-            implementation(compose.desktop.currentOs)
-        }
-    }
+dependencies {
+    implementation("io.github.gawwr4v:radialmenu:1.0.5")
 }
 ```
 
-## Compose Setup
+## Platform Setup
 
-`RadialMenuWrapper` handles trigger detection.  
-`RadialMenuOverlay` renders the menu above your UI.
+### Android View setup
 
 ```kotlin
-import io.github.gawwr4v.radialmenu.*
+// app/build.gradle.kts
+dependencies {
+    implementation("io.github.gawwr4v:radialmenu:1.0.5")
 
-@Composable
-fun DemoScreen() {
-    val items = listOf(
-        RadialMenuItem(id = 1, icon = homePainter, label = "Home"),
-        RadialMenuItem(id = 2, icon = searchPainter, label = "Search"),
-        RadialMenuItem(id = 3, icon = settingsPainter, label = "Settings")
-    )
-
-    Box {
-        RadialMenuWrapper(
-            items = items,
-            onItemSelected = { item ->
-                println("Selected: ${item.label}")
-            }
-        ) {
-            Content()
-        }
-
-        RadialMenuOverlay(items = items)
-    }
+    // Required only if you directly use Painter-based RadialMenuItem constructors.
+    // Not required for DrawableRes/Drawable overload usage.
+    implementation("androidx.compose.ui:ui:1.8.0")
 }
 ```
 
-## Trigger Modes (Compose)
-
-`Auto` is the default and recommended:
+### Android Compose setup (Kotlin 2.x)
 
 ```kotlin
-RadialMenuWrapper(
-    items = items,
-    onItemSelected = { /* ... */ }
-) { Content() }
+// app/build.gradle.kts
+plugins {
+    id("org.jetbrains.kotlin.plugin.compose") version "2.1.0"
+}
+
+android {
+    buildFeatures {
+        compose = true
+    }
+}
+
+dependencies {
+    implementation("io.github.gawwr4v:radialmenu:1.0.5")
+    implementation("androidx.compose.ui:ui:1.8.0")
+    implementation("androidx.compose.material3:material3:1.3.0")
+    implementation("androidx.activity:activity-compose:1.9.0")
+}
 ```
 
-Auto resolves to:
-- Android: `LongPress(positionAware = true)`
-- Desktop: `SecondaryClick(positionAware = false)`
-
-Explicit examples:
+### Desktop Compose setup
 
 ```kotlin
-// Mobile-first long press
-triggerMode = RadialMenuTriggerMode.LongPress(positionAware = true)
-
-// Desktop right-click
-triggerMode = RadialMenuTriggerMode.SecondaryClick(positionAware = false)
-
-// Keyboard hold (menu at center, commit on key up)
-triggerMode = RadialMenuTriggerMode.KeyboardHold(Key.Q)
+dependencies {
+    implementation("io.github.gawwr4v:radialmenu:1.0.5")
+    implementation(compose.desktop.currentOs)
+}
 ```
 
-## Desktop Notes
+Desktop minimum runtime: Java 17.
 
-- Default desktop trigger is right-click (`SecondaryClick`).
-- Keyboard hold opens menu at center.
-- Keyboard hold directional selection is based on cursor position at key-down (flick origin), not menu center.
+Desktop verification commands:
 
-## Edge-Hug Layout
+```bash
+# Verify dependency resolution on desktop runtime classpath
+./gradlew :desktopApp:dependencyInsight --dependency radialmenu --configuration runtimeClasspath
 
-Enable edge-hug only if you want corner L-shape behavior:
+# Verify desktop bytecode target (Java 17 = major version 61)
+javap -verbose -classpath ~/.m2/repository/io/github/gawwr4v/radialmenu-desktop/1.0.5/radialmenu-desktop-1.0.5.jar io.github.gawwr4v.radialmenu.RadialMenuTriggerMode
+```
+
+## Icon Setup
+
+Default API (`Painter`):
 
 ```kotlin
-RadialMenuWrapper(
-    items = items,
-    onItemSelected = { /* ... */ },
-    enableEdgeHugLayout = true
-) { Content() }
+RadialMenuItem(id = 1, icon = painter, label = "Share")
 ```
 
-Rules:
-- Applies in corners with 4+ items.
-- Uses nearest-item distance selection in edge-hug mode.
-- Skipped for center-spawned keyboard menus.
+Android shortcut (`@DrawableRes`):
 
-## Android View Setup (XML)
-
-```xml
-<io.github.gawwr4v.radialmenu.RadialMenuView
-    android:id="@+id/radial_menu"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    app:rm_menuRadius="90dp"
-    app:rm_iconSize="32dp"
-    app:rm_accentColor="@color/black" />
+```kotlin
+RadialMenuItem(context = this, id = 1, iconRes = R.drawable.ic_share, label = "Share")
 ```
+
+Android drawable overload:
+
+```kotlin
+RadialMenuItem(id = 1, icon = drawable, label = "Share")
+```
+
+Desktop uses `Painter` icons.
+
+## Compose Quick Start
+
+```kotlin
+val items = listOf(
+    RadialMenuItem(id = 1, icon = sharePainter, label = "Share"),
+    RadialMenuItem(id = 2, icon = likePainter, label = "Like"),
+    RadialMenuItem(id = 3, icon = savePainter, label = "Save")
+)
+
+Box {
+    RadialMenuWrapper(
+        items = items,
+        onItemSelected = { item -> println(item.label) }
+    ) {
+        Content()
+    }
+    RadialMenuOverlay(items = items)
+}
+```
+
+## Android View Quick Start
 
 ```kotlin
 val radialMenu = findViewById<RadialMenuView>(R.id.radial_menu)
-radialMenu.setItems(items)
-radialMenu.enableEdgeHugLayout = true
-radialMenu.triggerMode = RadialMenuTriggerMode.LongPress(positionAware = true)
-radialMenu.onItemSelected = { item ->
-    // handle selection
-}
+radialMenu.setItems(
+    listOf(
+        RadialMenuItem(context = this, id = 1, iconRes = R.drawable.ic_share, label = "Share"),
+        RadialMenuItem(context = this, id = 2, iconRes = R.drawable.ic_save, label = "Save")
+    )
+)
 ```
 
-`RadialMenuView` supports `LongPress` and `SecondaryClick`.  
-`KeyboardHold` is not implemented in `RadialMenuView`; use Compose wrapper for that trigger.
+## Troubleshooting
 
-## Next Steps
+### Imports are unresolved after adding the dependency
 
-- [Customization](customization.md)
-- [Changelog](changelog.md)
+Symptom: `Unresolved reference: RadialMenuView` or similar despite dependency being present.
+
+Cause: Gradle variant resolution may not automatically select the Android artifact in some project configurations.
+
+Fix:
+
+```kotlin
+implementation("io.github.gawwr4v:radialmenu:1.0.5@aar")
+```
+
+Then verify:
+
+```bash
+./gradlew :app:dependencies
+```
+
+### UnsupportedClassVersionError on Desktop
+
+Symptom: `compiled by a more recent version of the Java Runtime (class file version 65.0)`.
+
+Cause: Older pre-`1.0.5` artifact built for Java 21 is used on Java 17 runtime.
+
+Fix: upgrade to `1.0.5` (Java 17 bytecode), or run Java 21+ with older artifacts.
+
+### Compose type errors when using RadialMenuView
+
+Symptom: `Cannot access class 'Painter'`.
+
+Fix:
+
+```kotlin
+implementation("androidx.compose.ui:ui:1.8.0")
+```
+
+Or use the Android overloads with `iconRes`/`Drawable` and avoid direct Painter usage.

@@ -10,7 +10,7 @@
  *         RadialMenuItem(id = 1, icon = painterResource(R.drawable.ic_share), label = "Share"),
  *         RadialMenuItem(id = 2, icon = painterResource(R.drawable.ic_heart), label = "Like")
  *     ),
- *     onItemSelected = { item -> println("Selected: ${item.label}") }
+ *     onItemSelected = { item -> handleSelection(item) }
  * ) {
  *     Text("Long press me")
  * }
