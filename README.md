@@ -283,6 +283,24 @@ Fix option 2: use `iconRes`/`Drawable` overloads instead of direct `Painter`.
 | Edge-aware corner strategy | Yes | Often missing |
 | Maven Central publish | Yes | Often JitPack-only |
 
+## Why RadialMenu and, Current Limits
+
+### Why this over existing options
+
+- Kotlin Multiplatform-first packaging for Android and Desktop JVM.
+- Two integration paths in one library: Compose APIs and Android View APIs.
+- Better platform defaults via `Auto`: long press on Android, right click on Desktop.
+- Production-focused publish shape: `radialmenu`, `radialmenu-android`, and `radialmenu-desktop`.
+- Lean dependency surface in published metadata (`kotlin-stdlib` only).
+
+### Known limitations (verified for v1.0.5)
+
+- `KeyboardHold` is Compose-only; `RadialMenuView` supports `LongPress` and `SecondaryClick`.
+- Best UX is typically `4-8` items; more is supported but less ergonomic on small touch screens.
+- Desktop target is Compose Desktop JVM (Java 17+), not Swing/JavaFX-native widgets.
+- If you use `Painter` constructors directly in View-only modules, add `androidx.compose.ui:ui` (or use `iconRes`/`Drawable` overloads).
+
+
 ## Documentation
 
 - Website: [gawwr4v.github.io/RadialMenu](https://gawwr4v.github.io/RadialMenu/)
